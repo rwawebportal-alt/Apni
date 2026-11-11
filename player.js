@@ -1,6 +1,7 @@
 // =========================================================
-// RWA ULTIMATE ASMANI SKY OTT PLAYER ENGINE (player.js)
+// APNIPADHAI OTT PLAYER & HLS STREAMING ENGINE (player.js)
 // =========================================================
+
 const PROXY = "https://proplayer.allswbatch22.workers.dev/stream?url=";
 const SEGMENT = "https://proplayer.allswbatch22.workers.dev/proxy?url=";
 
@@ -146,6 +147,13 @@ function start() {
     let tokMatch = cleanRaw.match(/(edge-cache-token=[^&]+)/);
     if (tokMatch) cachedToken = tokMatch[1];
 
+    if (typeof state !== "undefined" && state.activeKey) {
+        let savedTime = localStorage.getItem("apnipadhai_vid_progress_" + state.activeKey);
+        if (savedTime) {
+            resumeSeekTime = parseFloat(savedTime);
+        }
+    }
+
     if (cleanRaw.includes(".mp4") && !cleanRaw.includes(".m3u8")) {
         v.src = cleanRaw;
         populateQualitySettings([]);
@@ -269,23 +277,40 @@ window.toggleSettingsMenu = function() {
     if (menu) menu.classList.toggle("show");
 };
 
-// TAP-TO-TOGGLE CONTROLS VISIBILITY LOGIC
+// TAP-TO-TOGGLE & DOUBLE-TAP TO SEEK LOGIC
 const hlsScreen = document.getElementById("hlsScreen");
 const playerControlsBar = document.getElementById("playerControlsBar");
+let lastTapTime = 0;
 
 if (hlsScreen) {
     hlsScreen.addEventListener("click", (e) => {
-        // Prevent toggle if clicking directly on buttons or settings menu
         if (e.target.closest("button") || e.target.closest("input") || e.target.closest("#settingsMenu")) {
             return;
         }
-        if (playerControlsBar) {
-            playerControlsBar.classList.toggle("hidden-controls");
+
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+
+        if (tapLength < 300 && tapLength > 0) {
+            const rect = hlsScreen.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            
+            if (clickX > rect.width / 2) {
+                v.currentTime = Math.min(v.duration || Infinity, v.currentTime + 10);
+            } else {
+                v.currentTime = Math.max(0, v.currentTime - 10);
+            }
+            e.preventDefault();
+        } else {
+            if (playerControlsBar) {
+                playerControlsBar.classList.toggle("hidden-controls");
+            }
+            const menu = document.getElementById("settingsMenu");
+            if (menu && menu.classList.contains("show")) {
+                menu.classList.remove("show");
+            }
         }
-        const menu = document.getElementById("settingsMenu");
-        if (menu && menu.classList.contains("show")) {
-            menu.classList.remove("show");
-        }
+        lastTapTime = currentTime;
     });
 }
 
@@ -336,7 +361,7 @@ async function downloadMerged() {
         const finalUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = finalUrl;
-        a.download = `RWA_Class_${Math.floor(Math.random() * 10000)}.mp4`;
+        a.download = `ApniPadhai_Class_${Math.floor(Math.random() * 10000)}.mp4`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -389,7 +414,6 @@ if (pipBtn) pipBtn.onclick = async () => {
     } catch {}
 };
 
-// FULLSCREEN & MINIMIZE BUTTON LOGIC
 const fsBtn = document.getElementById("fs");
 const headerBar = document.getElementById("playerHeaderBar");
 
@@ -419,11 +443,15 @@ v.ontimeupdate = () => {
     let d = v.duration;
     const seekEl = document.getElementById("seek");
     const timeEl = document.getElementById("time");
-    if (Number.isFinite(d) && d > 0 && seekEl) seekEl.value = v.currentTime / d * 1000;
+    if (Number.isFinite(d) && d > 0 && seekEl) seekEl.value = (v.currentTime / d) * 1000;
     if (timeEl) timeEl.textContent = fmt(v.currentTime) + " / " + fmt(d);
+
+    if (typeof state !== "undefined" && state.activeKey && v.currentTime > 2) {
+        localStorage.setItem("apnipadhai_vid_progress_" + state.activeKey, v.currentTime);
+    }
 };
 
 const seekEl = document.getElementById("seek");
 if (seekEl) seekEl.oninput = e => {
-    if (Number.isFinite(v.duration)) v.currentTime = e.target.value / 1000 * v.duration;
+    if (Number.isFinite(v.duration)) v.currentTime = (e.target.value / 1000) * v.duration;
 };
