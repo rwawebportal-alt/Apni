@@ -19,22 +19,20 @@ export default {
       return new Response("Error: URL parameter is missing. Example: ?url=https://example.com/video.m3u8", { status: 400 });
     }
 
-    // 2. Hardcoded Secure Headers (UPGRADED FROM LOGS)
-    const modifiedHeaders = new Headers();
+    // 2. MOST IMPORTANT FIX: Copy ALL original incoming headers (Token, User-ID, auth-key etc.)
+    const modifiedHeaders = new Headers(request.headers);
+
+    // 3. Override only the security headers to match ApniPadhai logs exactly
     modifiedHeaders.set("sec-ch-ua", '"Not-A.Brand";v="99", "Google Chrome";v="157", "Chromium";v="157"');
     modifiedHeaders.set("sec-ch-ua-mobile", "?0");
-    modifiedHeaders.set("Accept", "*/*");
     modifiedHeaders.set("sec-ch-ua-platform", '"Windows"');
     modifiedHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36");
     
-    // Origin और Referer को new endpoints के हिसाब से सेट किया है
     modifiedHeaders.set("Origin", "https://apnipadhai.org");
     modifiedHeaders.set("Referer", "https://apnipadhai.org/");
-    modifiedHeaders.set("auth-key", "appxapi");
-    modifiedHeaders.set("client-service", "Appx");
 
     try {
-      // 3. Akamai/Target Server को रिक्वेस्ट भेजें (With proper Body forwarding for POST logins)
+      // 4. Akamai/Target Server को रिक्वेस्ट भेजें (With proper POST Body Forwarding)
       const fetchOptions = {
         method: request.method,
         headers: modifiedHeaders,
@@ -47,7 +45,7 @@ export default {
 
       const targetResponse = await fetch(targetUrl, fetchOptions);
 
-      // 4. Response Headers को मॉडिफाई करें ताकि ब्राउज़र ब्लॉक न करे
+      // 5. Response Headers को मॉडिफाई करें ताकि ब्राउज़र वीडियो प्ले और JSON रीड कर सके
       const responseHeaders = new Headers(targetResponse.headers);
       responseHeaders.set("Access-Control-Allow-Origin", "*");
       responseHeaders.set("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS");
