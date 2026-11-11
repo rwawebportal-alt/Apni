@@ -243,10 +243,10 @@ async function loginOnRwaServer(phoneOrEmail, password) {
             const res = await fetch(`${API_BASE}${ep}`, {
                 method: "POST",
                 headers: {
-                    "Client-Service": "Appx",
-                    "Auth-Key": "appxapi",
+                    "client-service": "Appx",
+                    "auth-key": "appxapi",
                     "source": "website",
-                    "Device-Type": "",
+                    "device-type": "",
                     "is-safari": "0",
                     "Content-Type": "application/x-www-form-urlencoded",
                     "origin": "https://apnipadhai.org",
@@ -264,10 +264,10 @@ async function loginOnRwaServer(phoneOrEmail, password) {
             const res = await fetch(`${API_BASE}${ep}`, {
                 method: "POST",
                 headers: {
-                    "Client-Service": "Appx",
-                    "Auth-Key": "appxapi",
+                    "client-service": "Appx",
+                    "auth-key": "appxapi",
                     "source": "website",
-                    "Device-Type": "",
+                    "device-type": "",
                     "is-safari": "0",
                     "Content-Type": "application/json",
                     "origin": "https://apnipadhai.org",
