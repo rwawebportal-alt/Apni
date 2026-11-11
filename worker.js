@@ -32,6 +32,8 @@ export default {
     // FORBIDDEN HEADERS SPOOFING
     modifiedHeaders.set("Origin", "https://apnipadhai.org");
     modifiedHeaders.set("Referer", "https://apnipadhai.org/");
+    modifiedHeaders.set("auth-key", "appxapi");
+    modifiedHeaders.set("client-service", "Appx");
 
     try {
       // 4. Send request to Actual Server (Supporting POST body for Login)
