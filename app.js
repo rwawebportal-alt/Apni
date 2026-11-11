@@ -232,6 +232,10 @@ async function loginOnRwaServer(phoneOrEmail, password) {
 
     for (const ep of loginEndpoints) {
         try {
+            // PROXY ROUTING TO BYPASS BROWSER CORS & FORBIDDEN HEADERS
+            const targetUrl = `${API_BASE}${ep}`;
+            const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(targetUrl)}`;
+            
             const formData = new URLSearchParams();
             formData.append("email", phoneOrEmail);
             formData.append("phone", phoneOrEmail);
@@ -240,7 +244,7 @@ async function loginOnRwaServer(phoneOrEmail, password) {
             formData.append("devicetoken", "");
             formData.append("mydeviceid", "");
 
-            const res = await fetch(`${API_BASE}${ep}`, {
+            const res = await fetch(proxyUrl, {
                 method: "POST",
                 headers: {
                     "client-service": "Appx",
@@ -248,9 +252,7 @@ async function loginOnRwaServer(phoneOrEmail, password) {
                     "source": "website",
                     "device-type": "",
                     "is-safari": "0",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "origin": "https://apnipadhai.org",
-                    "referer": "https://apnipadhai.org/"
+                    "Content-Type": "application/x-www-form-urlencoded"
                 },
                 body: formData.toString()
             });
@@ -261,7 +263,10 @@ async function loginOnRwaServer(phoneOrEmail, password) {
         } catch {}
 
         try {
-            const res = await fetch(`${API_BASE}${ep}`, {
+            const targetUrl = `${API_BASE}${ep}`;
+            const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(targetUrl)}`;
+            
+            const res = await fetch(proxyUrl, {
                 method: "POST",
                 headers: {
                     "client-service": "Appx",
@@ -269,9 +274,7 @@ async function loginOnRwaServer(phoneOrEmail, password) {
                     "source": "website",
                     "device-type": "",
                     "is-safari": "0",
-                    "Content-Type": "application/json",
-                    "origin": "https://apnipadhai.org",
-                    "referer": "https://apnipadhai.org/"
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     email: phoneOrEmail,
@@ -763,7 +766,7 @@ function handleGlobalBack() {
 }
 
 // =====================================================
-// API CALLER (UPGRADED HEADERS TO BYPASS SECURITY)
+// API CALLER (PROXY ROUTING TO BYPASS BROWSER CORS & HEADERS)
 // =====================================================
 async function fetchRawJSONWithToken(endpoint, tokenObj) {
     const statusBadge = document.getElementById("apiStatus");
@@ -771,7 +774,11 @@ async function fetchRawJSONWithToken(endpoint, tokenObj) {
     const resolvedUid = String(useTok.userId || extractUidFromJwt(useTok.token) || "4756316");
 
     try {
-        const res = await fetch(`${API_BASE}${endpoint}`, {
+        // PROXY ROUTING TO BYPASS BROWSER CORS & FORBIDDEN HEADERS
+        const targetUrl = `${API_BASE}${endpoint}`;
+        const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(targetUrl)}`;
+
+        const res = await fetch(proxyUrl, {
             headers: {
                 "client-service": "Appx",
                 "auth-key": "appxapi",
@@ -779,9 +786,7 @@ async function fetchRawJSONWithToken(endpoint, tokenObj) {
                 "device-type": "",
                 "is-safari": "0",
                 "Authorization": useTok.token,
-                "User-ID": resolvedUid,
-                "origin": "https://apnipadhai.org",
-                "referer": "https://apnipadhai.org/"
+                "User-ID": resolvedUid
             }
         });
         const json = await res.json();
