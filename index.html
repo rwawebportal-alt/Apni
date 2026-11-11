@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>RWA Sky Pro Portal - Courses, Player & Live CBT Test Series</title>
+    <title>ApniPadhai Pro Portal - Courses, Player & Live CBT Test Series</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -24,17 +24,17 @@
     <nav id="topHeaderNav" class="sky-nav sticky top-0 z-40 px-4 py-3 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <div class="flex items-center gap-3 cursor-pointer" onclick="goHomeHub()">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-sky-500/30">R</div>
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-sky-500/30">A</div>
                 <div>
-                    <div class="font-extrabold text-lg leading-none text-slate-900 tracking-tight">RWA SKY PORTAL</div>
-                    <div id="apiStatus" class="text-[11px] font-bold text-emerald-600 mt-0.5">● Live Server Connected</div>
+                    <div class="font-extrabold text-lg leading-none text-slate-900 tracking-tight">APNIPADHAI PORTAL</div>
+                    <div id="apiStatus" class="text-[11px] font-bold text-emerald-600 mt-0.5">● Checking Server...</div>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
                 <button onclick="openTestSeriesExplorer('paid_ts')" class="btn-nav bg-indigo-600 text-white border-0">🏆 Paid Tests</button>
                 <button onclick="openTestSeriesExplorer('free_ts')" class="btn-nav bg-teal-600 text-white border-0">📝 Free Tests</button>
-                <button onclick="openTokenSlide()" class="btn-nav bg-amber-500 text-white border-0">🔑 My Token (<span id="tokCountBadge">1</span>)</button>
+                <button onclick="openTokenSlide()" class="btn-nav bg-amber-500 text-white border-0">🔑 My Token (<span id="tokCountBadge">0</span>)</button>
                 
                 <div id="navAuthArea" class="flex items-center gap-2">
                     <button id="navLoginBtn" onclick="openLoginModal()" class="btn-nav bg-blue-600 text-white border-0 hidden">🔐 Login</button>
@@ -47,22 +47,40 @@
         </div>
     </nav>
 
+    <!-- LIVE SERVER ERROR DISPLAY BANNER (SHOWS ANY SERVER / TOKEN / API ERROR DIRECTLY ON UI) -->
+    <div id="serverErrorBox" class="hidden max-w-7xl w-full mx-auto px-3 sm:px-6 mt-3 z-30">
+        <div class="bg-rose-50 border-2 border-rose-400 text-rose-900 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase">⚠️ Server / API Error</span>
+                    <h4 id="serverErrorTitle" class="font-black text-sm text-rose-900 truncate">Connection Error</h4>
+                </div>
+                <p id="serverErrorMessage" class="text-xs font-bold text-rose-700 mt-1 break-all"></p>
+                <p id="serverErrorEndpoint" class="text-[11px] font-mono text-rose-600 mt-0.5 break-all"></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="openTokenSlide()" class="btn-nav bg-amber-500 text-white border-0 text-xs">🔑 Check Token</button>
+                <button onclick="hideServerError()" class="btn-nav bg-rose-700 text-white border-0 text-xs">✖ Dismiss</button>
+            </div>
+        </div>
+    </div>
+
     <main class="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 relative overflow-x-hidden">
 
         <!-- SLIDE 1: HOME HUB -->
         <section id="slideHome" class="slide-page active-slide">
             <div class="text-center max-w-2xl mx-auto mb-8 mt-2">
-                <span class="px-3.5 py-1 rounded-full bg-white/80 text-sky-900 font-extrabold text-xs uppercase tracking-wider shadow-sm">RWA All-In-One Cloud Portal</span>
+                <span class="px-3.5 py-1 rounded-full bg-white/80 text-sky-900 font-extrabold text-xs uppercase tracking-wider shadow-sm">ApniPadhai Live Server Portal</span>
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2">Select Your Study Zone</h1>
-                <p class="text-slate-700 text-sm font-medium mt-1">Paid Batches, Free Classes, Official Paid/Free Test Series aur Multi-Token Sync.</p>
+                <p class="text-slate-700 text-sm font-medium mt-1">Sirf aapke active token se judi real Purchased Batches, Live Classes, PDFs aur Test Series.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                 <div onclick="openExplorerSlide('paid')" class="hub-card hub-paid cursor-pointer">
                     <div class="hub-icon">🎓</div>
-                    <span class="hub-badge">ALL TOKENS MERGED</span>
+                    <span class="hub-badge">MY PURCHASED COURSES</span>
                     <h2 class="text-2xl font-black mt-2">Paid Batches</h2>
-                    <p class="text-sm opacity-95 mt-1">Sabhi added tokens ke Purchased Batches, Live Classes, PDFs aur Batch Tests.</p>
+                    <p class="text-sm opacity-95 mt-1">Aapke token par kharide gaye sabhi Paid Batches, Folder-wise Classes, PDFs aur Batch Tests.</p>
                     <div class="hub-btn mt-5">Open Paid Batches ➔</div>
                 </div>
 
@@ -70,7 +88,7 @@
                     <div class="hub-icon">🆓</div>
                     <span class="hub-badge">FREE COURSES</span>
                     <h2 class="text-2xl font-black mt-2">Free Batches</h2>
-                    <p class="text-sm opacity-95 mt-1">RWA ke sabhi free courses, marathon classes aur revision series.</p>
+                    <p class="text-sm opacity-95 mt-1">Server par uplabdh sabhi courses aur free study material.</p>
                     <div class="hub-btn mt-5">Open Free Batches ➔</div>
                 </div>
 
@@ -78,15 +96,15 @@
                     <div class="hub-icon">🏆</div>
                     <span class="hub-badge">OFFICIAL EXAM SERIES</span>
                     <h2 class="text-2xl font-black mt-2">Paid Test Series</h2>
-                    <p class="text-sm opacity-95 mt-1">SSC, Police, BSF, UPPCS, NDA aur sabhi exams ki official Paid Test Series & PDFs.</p>
+                    <p class="text-sm opacity-95 mt-1">Server se live fetch ki gayi sabhi Paid Test Series aur Topic-wise Tests.</p>
                     <div class="hub-btn mt-5">Explore Paid Tests ➔</div>
                 </div>
 
                 <div onclick="openTestSeriesExplorer('free_ts')" class="hub-card hub-free-ts cursor-pointer">
                     <div class="hub-icon">📝</div>
-                    <span class="hub-badge">WEEKLY MOCK TESTS</span>
+                    <span class="hub-badge">MOCK TESTS</span>
                     <h2 class="text-2xl font-black mt-2">Free Test Series</h2>
-                    <p class="text-sm opacity-95 mt-1">UP Police, PET, RRB NTPC, SSC CGL aur sabhi Free Weekly Mock Tests.</p>
+                    <p class="text-sm opacity-95 mt-1">Sabhi exams ke liye live Free Mock Tests aur Quizzes.</p>
                     <div class="hub-btn mt-5">Attempt Free Tests ➔</div>
                 </div>
 
@@ -94,8 +112,8 @@
                     <div class="hub-icon">🔑</div>
                     <span class="hub-badge">MY ACCOUNT TOKEN</span>
                     <h2 class="text-2xl font-black mt-2">My Token Info</h2>
-                    <p class="text-sm opacity-95 mt-1">Apna active RWA login token dekhein ya naya personal token update karein.</p>
-                    <div class="hub-btn mt-5">View My Token ➔</div>
+                    <p class="text-sm opacity-95 mt-1">Apna active login token dekhein, naya token jodein ya purana token delete karein.</p>
+                    <div class="hub-btn mt-5">Manage My Token ➔</div>
                 </div>
             </div>
         </section>
@@ -112,16 +130,17 @@
                     <h2 id="headingText" class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">All Batches</h2>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <input type="text" id="searchBox" oninput="filterGrid()" placeholder="🔍 Search batch, subject, class or test..." 
+                    <input type="text" id="searchBox" oninput="filterGrid()" placeholder="🔍 Search batch, folder, class or test..." 
                            class="w-full sm:w-72 bg-white border-2 border-sky-300 rounded-2xl px-4 py-2.5 text-sm text-slate-900 font-medium shadow-sm outline-none focus:border-blue-600">
                 </div>
             </div>
 
             <div id="subTabs" class="hidden flex gap-2.5 mb-6 pb-2 overflow-x-auto">
-                <button onclick="loadCourseTab('subjects')" id="sub_subjects" class="tab-pill active-pill">📚 Subjects</button>
+                <button onclick="loadCourseTab('subjects')" id="sub_subjects" class="tab-pill active-pill">📚 Content (Folders)</button>
                 <button onclick="loadCourseTab('live')" id="sub_live" class="tab-pill">🔴 Live & Upcoming</button>
                 <button onclick="loadCourseTab('tests')" id="sub_tests" class="tab-pill">📝 Batch Tests</button>
-                <button onclick="loadCourseTab('telegram')" id="sub_telegram" class="tab-pill">✈️ Doubt Group</button>
+                <button onclick="loadCourseTab('posts')" id="sub_posts" class="tab-pill">📢 Announcements</button>
+                <button onclick="loadCourseTab('telegram')" id="sub_telegram" class="tab-pill">✈️ Telegram</button>
             </div>
 
             <div id="mainGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
@@ -216,7 +235,7 @@
                 <div id="nextClassesBox" class="sky-card p-5">
                     <div class="flex justify-between items-center mb-4 pb-2 border-b border-sky-200">
                         <div>
-                            <span class="text-[10px] font-black text-sky-700 uppercase">Up Next in Topic</span>
+                            <span class="text-[10px] font-black text-sky-700 uppercase">Up Next in Folder</span>
                             <h4 class="font-black text-lg text-slate-900">⏭️ Next Classes</h4>
                         </div>
                         <span id="nextClassesCount" class="px-3 py-1 rounded-full bg-sky-100 text-sky-900 font-extrabold text-xs">0 Classes</span>
@@ -312,35 +331,38 @@
             </div>
         </section>
 
-        <!-- SLIDE 5: USER PERSONAL TOKEN MANAGER (ADMIN TOKENS STRICTLY HIDDEN) -->
+        <!-- SLIDE 5: USER PERSONAL TOKEN MANAGER -->
         <section id="slideTokens" class="slide-page hidden-slide">
             <div class="max-w-3xl mx-auto sky-card p-6">
                 <div class="flex justify-between items-center pb-4 mb-4 border-b border-sky-200">
                     <div>
                         <span class="text-xs font-extrabold text-amber-600 uppercase">Personal Account Token</span>
                         <h2 class="text-2xl font-black text-slate-900">🔑 My Active Login Token</h2>
-                        <p class="text-xs text-slate-600 mt-0.5">Yahan sirf aapka khud ka login kiya gaya token dikhta hai. Aap chahein toh apna extra personal token bhi add kar sakte hain.</p>
+                        <p class="text-xs text-slate-600 mt-0.5">Yahan sirf aapka khud ka login kiya gaya token dikhta hai. Koi dummy ya admin token nahi hai.</p>
                     </div>
                     <button onclick="goHomeHub()" class="btn-nav bg-slate-900 text-white border-0">🏠 Home</button>
                 </div>
 
                 <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-4 mb-6">
-                    <h4 class="font-extrabold text-sm text-slate-800 mb-3">➕ Add / Update Personal Token</h4>
+                    <h4 class="font-extrabold text-sm text-slate-800 mb-3">➕ Add / Replace Personal Token</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="text-xs font-bold text-slate-700">Account Label / Name</label>
-                            <input id="newTokLabel" type="text" placeholder="e.g. My Personal Account" class="w-full bg-white border border-sky-300 rounded-xl p-2.5 text-xs text-slate-900 mt-1 outline-none">
+                            <input id="newTokLabel" type="text" placeholder="e.g. ApniPadhai Account" class="w-full bg-white border border-sky-300 rounded-xl p-2.5 text-xs text-slate-900 mt-1 outline-none">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-slate-700">User-ID (Auto-detected if blank)</label>
-                            <input id="newTokUid" type="text" placeholder="Auto from Token" class="w-full bg-white border border-sky-300 rounded-xl p-2.5 text-xs text-slate-900 mt-1 outline-none">
+                            <label class="text-xs font-bold text-slate-700">User-ID (Auto-detected from Token)</label>
+                            <input id="newTokUid" type="text" placeholder="e.g. 296064 (Leave blank for auto)" class="w-full bg-white border border-sky-300 rounded-xl p-2.5 text-xs text-slate-900 mt-1 outline-none">
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="text-xs font-bold text-slate-700">JWT Authorization Token</label>
                         <textarea id="newTokValue" rows="3" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." class="w-full bg-white border border-sky-300 rounded-xl p-2.5 text-xs text-slate-900 mt-1 font-mono outline-none"></textarea>
                     </div>
-                    <button onclick="addNewToken()" class="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs border-0 shadow-md cursor-pointer">💾 Verify & Save My Token</button>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="addNewToken()" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs border-0 shadow-md cursor-pointer">💾 Verify & Save My Token</button>
+                        <button onclick="clearAllSavedTokens()" class="bg-rose-600 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs border-0 shadow-md cursor-pointer">🗑 Clear Old Tokens</button>
+                    </div>
                 </div>
 
                 <div>
@@ -368,15 +390,15 @@
 
     </main>
 
-    <!-- COMPULSORY LOGIN MODAL (2 OPTIONS: NUMBER+PASSWORD OR DIRECT TOKEN) -->
+    <!-- COMPULSORY LOGIN MODAL -->
     <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-sky-300 animate-slideInSmooth">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white font-black text-base shadow">🔐</div>
                     <div>
-                        <h3 class="font-black text-lg text-slate-900 leading-none">RWA Official Login</h3>
-                        <p class="text-[11px] font-bold text-rose-600 mt-0.5">● Login Compulsory to Access Portal</p>
+                        <h3 class="font-black text-lg text-slate-900 leading-none">ApniPadhai Login</h3>
+                        <p class="text-[11px] font-bold text-rose-600 mt-0.5">● Connect Your Token to Server</p>
                     </div>
                 </div>
                 <button id="closeLoginModalBtn" onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-700 font-black text-lg hidden">✕</button>
@@ -388,8 +410,8 @@
                 <button id="tabBtnToken" onclick="switchLoginMode('token')" class="py-2 px-3 rounded-xl font-extrabold text-xs text-slate-700 bg-transparent hover:bg-sky-100 transition-all cursor-pointer border-0">🔑 Direct Token</button>
             </div>
 
-            <!--Status / Error Alert Box -->
-            <div id="loginStatusAlert" class="hidden mb-3 p-3 rounded-xl text-xs font-extrabold"></div>
+            <!-- Status / Error Alert Box -->
+            <div id="loginStatusAlert" class="hidden mb-3 p-3 rounded-xl text-xs font-extrabold break-all"></div>
 
             <!-- OPTION 1: Phone/Email + Password -->
             <div id="loginBoxCreds" class="space-y-3.5">
@@ -399,7 +421,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-extrabold text-slate-700">Password</label>
-                    <input id="loginPassInput" type="password" placeholder="Enter your RWA password" class="w-full bg-slate-50 border-2 border-sky-200 rounded-xl p-3 text-xs text-slate-900 font-semibold mt-1 outline-none focus:border-blue-600">
+                    <input id="loginPassInput" type="password" placeholder="Enter your password" class="w-full bg-slate-50 border-2 border-sky-200 rounded-xl p-3 text-xs text-slate-900 font-semibold mt-1 outline-none focus:border-blue-600">
                 </div>
                 <button id="btnSubmitCreds" onclick="submitUserLogin('creds')" class="w-full btn-watch py-3 text-sm shadow-lg">Login with Password ➔</button>
             </div>
@@ -410,19 +432,19 @@
                     <label class="text-xs font-extrabold text-slate-700">Paste Direct JWT Authorization Token</label>
                     <textarea id="loginTokenInput" rows="4" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." class="w-full bg-slate-50 border-2 border-sky-200 rounded-xl p-3 text-xs text-slate-900 font-mono mt-1 outline-none focus:border-blue-600"></textarea>
                 </div>
-                <p class="text-[11px] text-slate-500 font-medium">Token dalte hi server se verify hokar aapki sabhi profile details aur batches auto-fetch ho jayenge.</p>
-                <button id="btnSubmitToken" onclick="submitUserLogin('token')" class="w-full btn-watch py-3 text-sm shadow-lg">Verify Token & Login ➔</button>
+                <p class="text-[11px] text-slate-500 font-medium">Token dalte hi `aapnipadhaiapi.classx.co.in` se verify hokar aapke real batches load ho jayenge.</p>
+                <button id="btnSubmitToken" onclick="submitUserLogin('token')" class="w-full btn-watch py-3 text-sm shadow-lg">Verify Token & Connect ➔</button>
             </div>
         </div>
     </div>
 
-    <!-- USER PROFILE MODAL (EXACT OLD WEBSITE /get/get_user_dt DETAILS + USER TOKEN) -->
+    <!-- USER PROFILE MODAL -->
     <div id="profileModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-emerald-300 animate-slideInSmooth max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="text-xl">👤</span>
-                    <h3 class="font-black text-lg text-slate-900">My RWA Profile & Token</h3>
+                    <h3 class="font-black text-lg text-slate-900">My Profile & Active Token</h3>
                 </div>
                 <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-700 font-black text-lg cursor-pointer bg-transparent border-0">✕</button>
             </div>
