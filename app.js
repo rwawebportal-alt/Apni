@@ -812,7 +812,7 @@ async function fetchAPIWithToken(endpoint, tokenObj, fallbackGetter) {
 }
 
 // =====================================================
-// BATCHES & COURSES (UPGRADED ENDPOINTS)
+// BATCHES & COURSES (JSON PARSING FIX FOR APNIPADHAI LOGS)
 // =====================================================
 async function renderPaidBatches() {
     if (!enforceCompulsoryLogin()) return;
@@ -828,7 +828,7 @@ async function renderPaidBatches() {
     const seenIds = new Set();
     const allTokensToFetch = getAllTokensForCourses();
 
-    // UPGRADED ENDPOINTS TO NEW AAPNIPADHAI API LOGS
+    // FIXED PARSING LOGIC: Checks for nested 'coursedt' inside 'data' array
     for (const tokObj of allTokensToFetch) {
         const uid = tokObj.userId || extractUidFromJwt(tokObj.token) || "4756316";
         const purchasedEndpoints = [
@@ -840,21 +840,30 @@ async function renderPaidBatches() {
             const data = await fetchAPIWithToken(ep, tokObj, () => null);
             if (Array.isArray(data) && data.length > 0) {
                 data.forEach(c => {
-                    const courseData = c.coursedt && c.coursedt[0] ? c.coursedt[0] : c;
-                    const cid = String(courseData.id || courseData.course_id || "").trim();
-                    const cname = String(courseData.course_name || "").trim();
-                    if (cid && !seenIds.has(cid) && (!cname || !seenIds.has(cname))) {
-                        seenIds.add(cid);
-                        if (cname) seenIds.add(cname);
-                        state.courseTokenMap[cid] = tokObj;
-                        if (courseData.test_series_id) state.courseTestSeriesMap[cid] = String(courseData.test_series_id);
-                        mergedCourses.push({
-                            ...courseData,
-                            id: cid,
-                            _boundTokenObj: tokObj,
-                            _badgeText: tokObj.isAdmin ? "☁️ Cloud Synced" : `🔑 ${tokObj.label || "My Account"}`
-                        });
+                    // This exact line fixes the ApniPadhai JSON nesting issue (data -> coursedt -> course info)
+                    let courseDataList = [];
+                    if (c.coursedt && Array.isArray(c.coursedt) && c.coursedt.length > 0) {
+                        courseDataList = c.coursedt;
+                    } else if (c.id || c.course_id) {
+                        courseDataList = [c];
                     }
+
+                    courseDataList.forEach(courseData => {
+                        const cid = String(courseData.id || courseData.course_id || "").trim();
+                        const cname = String(courseData.course_name || "").trim();
+                        if (cid && !seenIds.has(cid) && (!cname || !seenIds.has(cname))) {
+                            seenIds.add(cid);
+                            if (cname) seenIds.add(cname);
+                            state.courseTokenMap[cid] = tokObj;
+                            if (courseData.test_series_id) state.courseTestSeriesMap[cid] = String(courseData.test_series_id);
+                            mergedCourses.push({
+                                ...courseData,
+                                id: cid,
+                                _boundTokenObj: tokObj,
+                                _badgeText: tokObj.isAdmin ? "☁️ Cloud Synced" : `🔑 ${tokObj.label || "My Account"}`
+                            });
+                        }
+                    });
                 });
             }
         }
