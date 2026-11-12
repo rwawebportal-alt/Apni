@@ -9,7 +9,7 @@ const TG_CHAT_ID = "-1004331013936";
 // 🌐 NEW SERVER API BASE & AES DECRYPTION KEY (FROM APNIPADHAI LOGS)
 const API_BASE = "https://aapnipadhaiapi.classx.co.in";
 const AES_KEY = CryptoJS.enc.Utf8.parse("638udh3829162018");
-const WORKER_RAW_PROXY = "https://proplayer.allswbatch22.workers.dev/proxy?url=";
+const WORKER_RAW_PROXY = "apna.tmock730.workers.dev/proxy?url=";
 
 // =====================================================
 // LIVE SERVER ERROR BANNER FUNCTIONS
