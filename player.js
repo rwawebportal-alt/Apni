@@ -2,8 +2,8 @@
 // APNIPADHAI OTT PLAYER & HLS STREAMING ENGINE (player.js)
 // =========================================================
 
-const PROXY = "https://proplayer.allswbatch22.workers.dev/stream?url=";
-const SEGMENT = "https://proplayer.allswbatch22.workers.dev/proxy?url=";
+const PROXY = "apna.tmock730.workers.dev/stream?url=";
+const SEGMENT = "https://apna.tmock730.workers.dev/proxy?url=";
 
 const v = document.getElementById("video");
 const input = document.getElementById("url");
