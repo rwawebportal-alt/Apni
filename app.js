@@ -148,6 +148,7 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
     const resolvedUid = String(useTok.userId || extractUidFromJwt(useTok.token) || "").trim();
     const cleanToken = useTok.token.replace(/^["']|["']$/g, "").trim();
 
+    // Exact headers from apnipadhai.org_2.txt logs
     const reqHeaders = {
         "accept": "*/*",
         "auth-key": "appxapi",
@@ -156,13 +157,11 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
         "is-safari": "0",
         "source": "website",
         "user-id": resolvedUid,
-        "User-ID": resolvedUid,
         "Authorization": cleanToken
     };
 
     const directUrl = `${API_BASE}${endpoint}`;
 
-    // 1. Try Direct Connection to aapnipadhaiapi.classx.co.in (CORS is enabled on server)
     try {
         const res = await fetch(directUrl, {
             method: "GET",
@@ -174,17 +173,13 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
         try {
             json = JSON.parse(text);
         } catch {
-            throw new Error(`Invalid JSON response (HTTP ${res.status}): ${text.slice(0, 120)}`);
+            throw new Error(`Server returned HTTP ${res.status}`);
         }
 
         if (!res.ok || (json && json.status && Number(json.status) !== 200)) {
             const errMsg = (json && (json.msg || json.message || json.error)) || `HTTP Status ${res.status}`;
             if (!silentError) {
-                showServerError(`Server Rejected Request (${res.status})`, `${errMsg} (UID: ${resolvedUid || "Missing"})`, endpoint);
-            }
-            if (statusBadge) {
-                statusBadge.textContent = `● Server Error (${json?.status || res.status})`;
-                statusBadge.className = "text-[11px] font-bold text-rose-600 mt-0.5";
+                showServerError(`Server Error (${res.status})`, `${errMsg} (UID: ${resolvedUid})`, endpoint);
             }
             return json;
         }
@@ -194,6 +189,12 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
             statusBadge.className = "text-[11px] font-bold text-emerald-600 mt-0.5";
         }
         return json;
+    } catch (err) {
+        if (!silentError) {
+            showServerError("Server Endpoint Timeout / Error", `${err.message}`, endpoint);
+        }
+        return null;
+    }
     } catch (directErr) {
         // 2. Fallback to Cloudflare Worker Proxy if Direct Fetch fails due to network/CORS
         try {
@@ -1610,40 +1611,73 @@ async function openTestSeriesExplorer(mode) {
 
     const primaryTok = USER_TOKENS[0];
     state.activeTokenObj = primaryTok;
+    const uid = String(primaryTok?.userId || extractUidFromJwt(primaryTok?.token) || "").trim();
 
-    if (mode === "paid_ts") {
-        document.getElementById("crumbText").textContent = "Official Exam Series";
-        document.getElementById("headingText").textContent = "🏆 Paid Test Series";
+    document.getElementById("crumbText").textContent = mode === "paid_ts" ? "Course & Purchased Series" : "Free Mock Tests";
+    document.getElementById("headingText").textContent = mode === "paid_ts" ? "🏆 Paid Test Series" : "📝 Free Test Series";
 
-        const p0 = await fetchAPIWithToken(`/get/test_series?start=0&search=&client_api_url=&exam_id=`, primaryTok, false);
-        const combined = Array.isArray(p0) ? p0 : [];
+    let combined = [];
 
-        grid.innerHTML = "";
-        if (combined.length === 0) {
-            grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Server par koi Paid Test Series nahi mili.</div>`;
-            return;
-        }
+    // Step 1: Fetch user's purchased courses & extract their attached Test Series via /get/test_seriesbycourseid (Exact from logs)
+    const purchases = await fetchAPIWithToken(`/get/get_all_purchases?userid=${uid}&item_type=10&paid_status=all`, primaryTok, true);
+    const courseIds = new Set();
 
-        const seen = new Set();
-        combined.forEach(ts => {
-            if (seen.has(String(ts.id))) return;
-            seen.add(String(ts.id));
-            const title = (ts.title || "Test Series").replace(/'/g, "").replace(/"/g, "");
-            const logo = (ts.logo || "").replace(/\\\//g, "/") || "https://placehold.co/600x320/4f46e5/ffffff?text=Test+Series";
-            grid.innerHTML += `
-                <div onclick="openTestSeriesSubjects('${ts.id}', '${title}')" class="grid-card overflow-hidden cursor-pointer flex flex-col justify-between">
-                    <div>
-                        <img src="${logo}" onerror="this.src='https://placehold.co/600x320/4f46e5/ffffff?text=Test+Series'" class="w-full h-44 object-cover">
-                        <div class="p-4">
-                            <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-[10px] font-black">SERIES #${ts.id}</span>
-                            <h3 class="font-black text-base text-slate-900 mt-2">${ts.title}</h3>
-                        </div>
-                    </div>
-                    <div class="px-4 pb-4">
-                        <div class="btn-watch w-full text-center text-xs">Open Test Subjects ➔</div>
-                    </div>
-                </div>`;
+    if (Array.isArray(purchases)) {
+        purchases.forEach(p => {
+            if (p.itemid) courseIds.add(String(p.itemid));
+            if (Array.isArray(p.coursedt)) {
+                p.coursedt.forEach(c => { if (c.id) courseIds.add(String(c.id)); });
+            }
         });
+    }
+
+    for (const cid of courseIds) {
+        const tsByCourse = await fetchAPIWithToken(
+            `/get/test_seriesbycourseid?courseid=${cid}&userid=${uid}&folder_wise_course=1&start=-1`,
+            primaryTok,
+            true
+        );
+        if (Array.isArray(tsByCourse) && tsByCourse.length > 0) {
+            combined.push(...tsByCourse);
+        }
+    }
+
+    // Step 2: Check direct test series purchases (item_type=2)
+    const directTsPurchases = await fetchAPIWithToken(`/get/get_all_purchases?userid=${uid}&item_type=2&paid_status=all`, primaryTok, true);
+    if (Array.isArray(directTsPurchases)) {
+        directTsPurchases.forEach(p => {
+            if (Array.isArray(p.testseriesdt)) combined.push(...p.testseriesdt);
+            else if (p.title && p.id) combined.push(p);
+        });
+    }
+
+    grid.innerHTML = "";
+    if (combined.length === 0) {
+        grid.innerHTML = `<div class="col-span-full sky-card p-10 text-center font-bold text-slate-600">Is token par abhi koi Test Series nahi mili.</div>`;
+        return;
+    }
+
+    const seen = new Set();
+    combined.forEach(ts => {
+        const tsId = String(ts.id || ts.testseries_id || "");
+        if (!tsId || seen.has(tsId)) return;
+        seen.add(tsId);
+        const title = (ts.title || "Test Series").replace(/'/g, "").replace(/"/g, "");
+        const logo = (ts.logo || "").replace(/\\\//g, "/") || "https://placehold.co/600x320/4f46e5/ffffff?text=Test+Series";
+        grid.innerHTML += `
+            <div onclick="openTestSeriesSubjects('${tsId}', '${title}')" class="grid-card overflow-hidden cursor-pointer flex flex-col justify-between">
+                <div>
+                    <img src="${logo}" onerror="this.src='https://placehold.co/600x320/4f46e5/ffffff?text=Test+Series'" class="w-full h-44 object-cover">
+                    <div class="p-4">
+                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 text-[10px] font-black">SERIES #${tsId}</span>
+                        <h3 class="font-black text-base text-slate-900 mt-2">${ts.title}</h3>
+                    </div>
+                </div>
+                <div class="px-4 pb-4">
+                    <div class="btn-watch w-full text-center text-xs">Open Mock Tests ➔</div>
+                </div>
+            </div>`;
+    });
     } else {
         document.getElementById("crumbText").textContent = "Free Mock Tests";
         document.getElementById("headingText").textContent = "📝 Free Test Series";
