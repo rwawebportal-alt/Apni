@@ -195,7 +195,7 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
         }
         return null;
     }
-    } catch (directErr) {
+     catch (directErr) {
         // 2. Fallback to Cloudflare Worker Proxy if Direct Fetch fails due to network/CORS
         try {
             const proxyUrl = `${WORKER_RAW_PROXY}${encodeURIComponent(directUrl)}`;
