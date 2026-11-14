@@ -2,8 +2,9 @@
 // APNIPADHAI OTT PLAYER & HLS STREAMING ENGINE (player.js)
 // =========================================================
 
-const PROXY = "https://apna.tmock730.workers.dev/stream?url=";
-const SEGMENT = "https://apna.tmock730.workers.dev/proxy?url=";
+const WORKER_DOMAIN = "https://apna.tmock730.workers.dev";
+const PROXY = `${WORKER_DOMAIN}/stream?url=`;
+const SEGMENT = `${WORKER_DOMAIN}/proxy?url=`;
 
 const v = document.getElementById("video");
 const input = document.getElementById("url");
@@ -12,6 +13,7 @@ const bufferLoader = document.getElementById("bufferLoader");
 let hls = null;
 let cachedToken = "";
 let resumeSeekTime = 0;
+let useDirectStreamFallback = false;
 
 function showLoader(show) {
     if (!bufferLoader) return;
@@ -29,17 +31,26 @@ function valid(u) {
 
 function unwrapOriginalUrl(u) {
     if (!u) return "";
-    try {
-        const parsed = new URL(u);
-        if (parsed.hostname.includes("workers.dev") && parsed.searchParams.has("url")) {
-            return decodeURIComponent(parsed.searchParams.get("url"));
-        }
-    } catch {}
-    return u;
+    let current = u.trim();
+    let count = 0;
+    while (count < 5) {
+        count++;
+        try {
+            const parsed = new URL(current);
+            if (parsed.hostname.includes("workers.dev") && parsed.searchParams.has("url")) {
+                const inner = parsed.searchParams.get("url");
+                current = /^https?%3A%2F%2F/i.test(inner) ? decodeURIComponent(inner) : inner;
+                continue;
+            }
+        } catch {}
+        break;
+    }
+    return current;
 }
 
 function manifest(u) {
     const rawUrl = unwrapOriginalUrl(u);
+    if (useDirectStreamFallback) return rawUrl;
     try {
         const x = new URL(rawUrl);
         if (x.pathname.toLowerCase().includes(".m3u8") || x.hostname.includes("classx.co.in") || x.hostname.includes("akamai.net.in")) {
@@ -50,7 +61,7 @@ function manifest(u) {
 }
 
 function segment(u) {
-    return /\.(ts|m4s|mp4|aac|mp3|vtt|webvtt)(\?|$)/i.test(u.split("?")[0]);
+    return /\.(ts|m4s|mp4|aac|mp3|vtt|webvtt|key)(\?|$)/i.test(u.split("?")[0]);
 }
 
 class BackendLoader extends Hls.DefaultConfig.loader {
@@ -63,17 +74,24 @@ class BackendLoader extends Hls.DefaultConfig.loader {
             cachedToken = match[1];
         }
 
-        if (originalUrl.includes("allswbatch22.workers.dev")) {
-            ctx.url = originalUrl;
+        // CRITICAL FIX: Agar URL pehle se kisi bhi .workers.dev par hai, toh use dobara wrap MAT karo!
+        if (originalUrl.includes(".workers.dev")) {
+            if (useDirectStreamFallback) {
+                ctx.url = unwrapOriginalUrl(originalUrl);
+            } else {
+                ctx.url = originalUrl;
+            }
             super.load(ctx, cfg, cb);
             return;
         }
 
-        if (cachedToken && !originalUrl.includes("edge-cache-token=")) {
+        if (cachedToken && !originalUrl.includes("edge-cache-token=") && !originalUrl.includes("hdnea=")) {
             originalUrl += (originalUrl.includes("?") ? "&" : "?") + cachedToken;
         }
 
-        if (originalUrl.includes(".m3u8")) {
+        if (useDirectStreamFallback) {
+            ctx.url = originalUrl;
+        } else if (originalUrl.split("?")[0].toLowerCase().endsWith(".m3u8")) {
             ctx.url = PROXY + encodeURIComponent(originalUrl);
         } else if (segment(originalUrl)) {
             ctx.url = SEGMENT + encodeURIComponent(originalUrl);
@@ -112,10 +130,11 @@ window.closePlayerBox = function() {
     }
 };
 
-function start() {
+function start(retryDirect = false) {
     let raw = input ? input.value.trim() : "";
     if (!raw) return;
 
+    useDirectStreamFallback = retryDirect;
     stopPlayer();
     showLoader(true);
 
@@ -193,6 +212,12 @@ function start() {
 
         hls.on(Hls.Events.ERROR, (_, d) => {
             if (d.fatal) {
+                if (d.type === Hls.ErrorTypes.NETWORK_ERROR && !useDirectStreamFallback) {
+                    // Agar Worker par 403 ya network error aaye, toh automatically Direct CDN stream chalu karo
+                    console.warn("Worker stream failed, switching to Direct CDN playback...");
+                    start(true);
+                    return;
+                }
                 showLoader(false);
                 if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
                     try { hls.recoverMediaError(); } catch {}
@@ -334,24 +359,20 @@ async function downloadMerged() {
         let tokenStr = match ? match[1] : cachedToken;
 
         if (fragments[0] && fragments[0].initSegment) {
-            let initUrl = fragments[0].initSegment.url;
-            if (!initUrl.includes("allswbatch22.workers.dev")) {
-                if (tokenStr && !initUrl.includes("edge-cache-token=")) initUrl += (initUrl.includes("?") ? "&" : "?") + tokenStr;
-                initUrl = SEGMENT + encodeURIComponent(initUrl);
-            }
+            let initUrl = unwrapOriginalUrl(fragments[0].initSegment.url);
+            if (tokenStr && !initUrl.includes("edge-cache-token=")) initUrl += (initUrl.includes("?") ? "&" : "?") + tokenStr;
+            if (!useDirectStreamFallback) initUrl = SEGMENT + encodeURIComponent(initUrl);
             let res = await fetch(initUrl);
             if (res.ok) downloadedBuffers.push(await res.arrayBuffer());
         }
 
         for (let i = 0; i < total; i++) {
             if (text) text.textContent = `Downloading: ${i + 1} / ${total} (${Math.round(((i + 1) / total) * 100)}%)`;
-            let segUrl = fragments[i].url;
-            if (!segUrl.includes("allswbatch22.workers.dev")) {
-                if (tokenStr && !segUrl.includes("edge-cache-token=")) segUrl += (segUrl.includes("?") ? "&" : "?") + tokenStr;
-                segUrl = SEGMENT + encodeURIComponent(segUrl);
-            }
+            let segUrl = unwrapOriginalUrl(fragments[i].url);
+            if (tokenStr && !segUrl.includes("edge-cache-token=")) segUrl += (segUrl.includes("?") ? "&" : "?") + tokenStr;
+            if (!useDirectStreamFallback) segUrl = SEGMENT + encodeURIComponent(segUrl);
             let segRes = await fetch(segUrl);
-            if (!segRes.ok) throw new Error(`Segment ${i + 1} Error`);
+            if (!segRes.ok) throw new Error(`Segment ${i + 1} Error (${segRes.status})`);
             downloadedBuffers.push(await segRes.arrayBuffer());
             if (bar) bar.style.width = Math.round(((i + 1) / total) * 100) + "%";
         }
