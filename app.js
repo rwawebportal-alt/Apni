@@ -194,7 +194,7 @@ async function fetchRawJSONWithToken(endpoint, tokenObj, silentError = false) {
             statusBadge.className = "text-[11px] font-bold text-emerald-600 mt-0.5";
         }
         return json;
-    } 
+    
     } catch (directErr) {
         // 2. Fallback to Cloudflare Worker Proxy if Direct Fetch fails due to network/CORS
         try {
